@@ -1,0 +1,91 @@
+<?php
+
+namespace App;
+
+use App\View;
+use App\Controller\ControllerFactory;
+use Exception;
+
+class Routes
+{
+    public static function init()
+    {
+        try {
+            $path = $_SERVER['REQUEST_URI'];
+            $path = strtok($path, '?');
+
+            $routes = (strpos($path, '/api') === 0)
+                ? include 'routes/api.php'
+                : include 'routes/web.php';
+
+            $matched = false;
+
+            foreach ($routes as $route => $methods) {
+                if (preg_match("~^$route$~", $path, $matches)) {
+                    $requestMethod = $_SERVER['REQUEST_METHOD'];
+
+                    if (isset($routes[$route][$requestMethod])) {
+                        $parts = explode('@', $routes[$route][$requestMethod]);
+                        $controllerName = $parts[0];
+                        $methodName = $parts[1];
+
+                        $controller = ControllerFactory::create($controllerName);
+
+                        if (method_exists($controller, $methodName)) {
+                            $params = array_slice($matches, 1);
+                            $params = self::processParameters($params);
+
+                            if ($requestMethod === 'GET') {
+                                $params[] = $_GET;
+                            }
+
+                            if ($requestMethod === 'POST') {
+                                $params[] = $_POST;
+                            }
+
+                            if (in_array($requestMethod, ['PUT', 'DELETE'])) {
+                                $input = file_get_contents('php://input');
+                                parse_str($input, $putDeleteParams);
+                                $params[] = $putDeleteParams;
+                            }
+
+                            call_user_func_array([$controller, $methodName], $params);
+                            $matched = true;
+                            break;
+                        }
+                    }
+                }
+            }
+
+            if (!$matched) {
+                self::render404();
+            }
+        } catch (Exception $e) {
+            // Log the exception
+            error_log($e->getMessage());
+            self::render500();
+        }
+    }
+
+    private static function processParameters(array $params)
+    {
+        foreach ($params as &$param) {
+            if (is_numeric($param) && strpos($param, '.') === false) {
+                $param = (int) $param;
+            }
+        }
+        return $params;
+    }
+
+    private static function render404()
+    {
+        View::render('404_page');
+    }
+
+    private static function render500()
+    {
+        View::render('500_page');
+    }
+}
+
+Routes::init();

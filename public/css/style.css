@@ -1,0 +1,268 @@
+@import url("https://fonts.googleapis.com/css2?family=Aladin&display=swap");
+.selected {
+  border-radius: 0.375rem;
+  color: #fff;
+  background-color: #007bff !important;
+}
+.floating-btn {
+  position: fixed;
+  bottom: 10%;
+  right: 50%;
+  transform: translate(50%, 50%);
+  font-size: 2rem;
+  color: #fff;
+  border: none;
+  cursor: pointer;
+}
+.highlight-on-hover:hover {
+  color: rgb(255, 255, 255); /* Lub dowolny inny kolor podświetlenia */
+  background: #dc3545;
+  border-radius: 0.375rem;
+}
+.custom-row-delegate {
+  height: 60vh; /* Ustawia wysokość rzędu na 50% wysokości widoku */
+}
+.custom-row-delegate-right {
+  height: 59vh; /* Ustawia wysokość rzędu na 50% wysokości widoku */
+}
+.custom-row-code {
+  height: 63vh; /* Ustawia wysokość rzędu na 50% wysokości widoku */
+}
+.custom-row-links {
+  height: 24vh; /* Ustawia wysokość rzędu na 50% wysokości widoku */
+}
+.offcanvas {
+  transition: transform 0.3s ease;
+}
+.size {
+  min-height: 100px;
+}
+/* Drag */
+ul {
+  list-style-type: none;
+  margin: 0;
+  padding: 0;
+}
+
+.task-container {
+  max-width: 1200px;
+  margin: 20px auto;
+}
+
+.task-list {
+  display: flex;
+  align-items: flex-start;
+}
+
+@media (max-width: 750px) {
+  .task-list {
+    display: block;
+  }
+}
+
+.task-column {
+  flex: 1;
+  margin: 0 10px;
+  position: relative;
+  overflow: hidden;
+}
+
+@media (max-width: 750px) {
+  .task-column {
+    margin-bottom: 30px;
+  }
+}
+
+.task-column-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.5rem;
+}
+
+.task-column-header h2 {
+  font-size: 1.5rem;
+  font-weight: 400;
+  margin: 0;
+  text-transform: uppercase;
+}
+
+.task-column-on-hold .task-column-header,
+.task-column-in-progress .task-column-header,
+.task-column-needs-review .task-column-header,
+.task-column-approved .task-column-header {
+  color: white;
+}
+
+.task-column-on-hold {
+  background: #4b9efd;
+}
+
+.task-column-in-progress {
+  background: #ffb335;
+}
+
+.task-column-needs-review {
+  background: #8473e1;
+}
+
+.task-column-approved {
+  background: #44d26f;
+}
+
+.task-inner-list {
+  min-height: 50px;
+}
+
+.task-item {
+  position: relative;
+  margin-bottom: 1rem;
+  padding: 1rem;
+  height: 120px;
+  background: white;
+  border-radius: 0.2rem;
+  border: 1px solid #cfd9ea;
+  box-shadow: 0px 2px 5px rgba(#cfd9ea, 0.1);
+  transition: all 0.3s cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+.task-item h1 {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 400;
+  padding-right: 2rem;
+}
+
+.task-item.is-moving {
+  cursor: wait;
+}
+
+/* Dragula CSS  */
+.gu-mirror {
+  position: fixed !important;
+  margin: 0 !important;
+  z-index: 9999 !important;
+  opacity: 0.8;
+  list-style-type: none;
+}
+
+.gu-hide {
+  display: none !important;
+}
+
+.gu-unselectable {
+  -webkit-user-select: none !important;
+  -moz-user-select: none !important;
+  -ms-user-select: none !important;
+  user-select: none !important;
+}
+
+.gu-transit {
+  opacity: 0.5;
+}
+/* Preloader */
+.loader {
+  font-family: "Aladin", system-ui;
+  font-weight: 400;
+  font-style: normal;
+  position: fixed;
+  font-size: 48px;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: #222222;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+}
+.loader img {
+  max-width: 80px;
+}
+.card-all:hover {
+  transform: scale(1.05);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.12), 0 4px 8px rgba(0, 0, 0, 0.06);
+}
+.img-fluid {
+  max-height: 200px;
+  object-fit: cover;
+}
+.offcanvas-header {
+  display: flex;
+  align-items: center; /* Wyrównanie elementów w pionie */
+  justify-content: space-between; /* Rozstawienie elementów na krańcach */
+}
+
+.offcanvas-header h5 {
+  margin: 0; /* Usunięcie domyślnych marginesów */
+}
+
+.offcanvas-header .btn {
+  margin: 0 15px; /* Opcjonalne marginesy, aby oddzielić przycisk od innych elementów */
+}
+/* Avatar */
+.avatar-container {
+  position: relative;
+  display: inline-block;
+}
+.avatar-container .avatar {
+  border-radius: 50%;
+}
+.avatar-container .status-icon {
+  position: absolute;
+  bottom: 10%;
+  left: 10%;
+  transform: translate(-50%, 50%);
+  background-color: green; /* Kolor statusu online */
+  border-radius: 50%;
+  height: 12px;
+  width: 12px;
+  font-size: 12px; /* Rozmiar ikony */
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.avatar-container {
+  position: relative;
+  display: inline-block;
+}
+.avatar {
+  width: 48px; /* Rozmiar awatara */
+  height: 48px; /* Rozmiar awatara */
+  border-radius: 50%; /* Zaokrąglenie awatara */
+  object-fit: cover; /* Dopasowanie obrazu do kontenera */
+}
+.online-status {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 12px;
+  height: 12px;
+  background-color: #28a745; /* Kolor zielony dla statusu online */
+  border-radius: 50%;
+}
+.dropdown-toggle {
+  display: flex;
+  align-items: center;
+}
+.plus-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100px; /* Możesz dostosować wysokość według potrzeby */
+  border-radius: 0.25rem; /* Zaokrąglenie rogów, dostosuj do potrzeb */
+  cursor: pointer;
+  font-size: 2rem; /* Rozmiar plusa, dostosuj do potrzeb */
+  color: #ffffff; /* Kolor plusa, dostosuj do potrzeb */
+  border: 2px dashed #ffffff; /* Opcjonalne, dodaje obramowanie */
+  text-align: center;
+  vertical-align: middle;
+  transition: background-color 0.3s ease, transform 0.3s ease;
+}
+.plus-container:hover {
+  background-color: #e9ecef; /* Kolor tła po najechaniu */
+  transform: scale(1.05); /* Powiększa plusa po najechaniu */
+}
