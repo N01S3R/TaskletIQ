@@ -1,6 +1,6 @@
-# TaskleiQ
+# TaskleIQ
 
-TaskleiQ to zaawansowana aplikacja do zarządzania zadaniami i projektami, umożliwiająca tworzenie projektów, dodawanie zadań oraz przypisywanie użytkowników do poszczególnych zadań. System oferuje także zaawansowane funkcje administracyjne, takie jak zarządzanie użytkownikami, autoryzacja administratora oraz zapraszanie użytkowników do grupy za pomocą tokenów.
+TaskleIQ to zaawansowana aplikacja do zarządzania zadaniami i projektami, umożliwiająca tworzenie projektów, dodawanie zadań oraz przypisywanie użytkowników do poszczególnych zadań. System oferuje także zaawansowane funkcje administracyjne, takie jak zarządzanie użytkownikami, autoryzacja administratora oraz zapraszanie użytkowników do grupy za pomocą tokenów.
 
 ## Funkcje
 
@@ -23,26 +23,18 @@ TaskleiQ to zaawansowana aplikacja do zarządzania zadaniami i projektami, umoż
 ### 1. Klonowanie repozytorium
 
 ```bash
-git clone https://github.com/twoj-uzytkownik/taskleiq.git
+git clone https://github.com/N01S3R/TaskletIQ.git
 cd taskleiq
 ```
 ### 2. Konfiguracja serwera
 
 1. Skonfiguruj środowisko PHP na swoim serwerze (wymagane PHP 7.4 lub nowsze).
-2. Utwórz bazę danych MySQL i zaimportuj do niej plik `database.sql` z folderu projektu.
+2. Utwórz bazę danych MySQL i zaimportuj do niej plik `todolist.sql` z folderu projektu.
 3. Skonfiguruj plik `config.php`, w którym ustawisz dane dostępowe do bazy danych.
 
 ### 3. Instalacja zależności
 
 Aplikacja nie wymaga dodatkowych narzędzi do instalacji. Wystarczy mieć zainstalowane PHP i MySQL.
-
-### 4. Uruchomienie aplikacji
-
-Uruchom aplikację na swoim lokalnym serwerze lub zewnętrznym serwerze Apache/Nginx. Przykład użycia XAMPP:
-
-1. Skopiuj projekt do folderu `htdocs`.
-2. Uruchom serwer Apache i MySQL.
-3. Otwórz przeglądarkę i przejdź pod adres `http://localhost/taskleiq`.
 
 ## Użycie
 
