@@ -4,13 +4,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>User Panel</title>
+    <title><?= $_ENV["APP_NAME"]; ?></title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-    <link rel="stylesheet" href="<?php echo getenv('BASE_URL'); ?>css/style.css">
+    <link rel="stylesheet" href="<?= $_ENV["BASE_URL"]; ?>css/style.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/lobibox/dist/css/lobibox.min.css" />
     <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/lobibox/dist/js/lobibox.min.js"></script>
-    <link rel="stylesheet" href="<?php echo getenv('BASE_URL'); ?>css/bootstrap.min.css">
+    <link rel="stylesheet" href="<?= $_ENV["BASE_URL"]; ?>css/bootstrap.min.css">
     <!-- Include Vue.js library -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/dragula/3.7.2/dragula.min.js"></script>
     <script src="https://unpkg.com/vue@next"></script>
@@ -19,7 +19,7 @@
 <body>
     <nav class="navbar navbar-expand-lg navbar-light bg-primary">
         <div class="container">
-            <a class="navbar-brand text-white p-0" href="<?= getenv('BASE_URL') . 'operator/dashboard'; ?>"><img src="/images/logo.png" alt="User Avatar" class="avatar" style="height: 64px;"></a>
+            <a class="navbar-brand text-white p-0" href="<?= $_ENV["BASE_URL"]; ?>operator/dashboard"><img src="/images/logo.png" alt="User Avatar" class="avatar" style="height: 64px;"></a>
             <ul class="navbar-nav ml-auto bg-dark rounded">
                 <li class="nav-item dropdown d-none d-md-block">
                     <a class="nav-link dropdown-toggle text-white fs-5" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
