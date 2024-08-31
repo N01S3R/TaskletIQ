@@ -3,30 +3,19 @@
 namespace App\Controller;
 
 use App\View;
-use App\Model\TaskModel;
-use App\Model\UserModel;
-use App\Model\CreatorModel;
-use App\Model\ProjectModel;
+use App\Config\DoctrineConfig;
 use App\Helpers\AuthHelpers;
-use App\Model\OperatorModel;
+use Doctrine\ORM\EntityManager;
 
 class BaseController
 {
     protected $view;
-    protected $taskModel;
-    protected $userModel;
-    protected $projectModel;
-    protected $creatorModel;
-    protected $operatorModel;
+    protected $entityManager;
 
     public function __construct()
     {
         $this->view = new View();
-        $this->taskModel = new TaskModel();
-        $this->userModel = new UserModel();
-        $this->projectModel = new ProjectModel();
-        $this->creatorModel = new CreatorModel();
-        $this->operatorModel = new OperatorModel();
+        $this->entityManager = DoctrineConfig::createEntityManager();
     }
 
     /**
@@ -54,49 +43,6 @@ class BaseController
     }
 
     /**
-     * Sprawdza, czy użytkownik jest zalogowany.
-     *
-     * @return bool True, jeśli użytkownik jest zalogowany; false w przeciwnym razie
-     */
-    public function checkLogged(): bool
-    {
-        if (isset($_SESSION['user_id']) && isset($_COOKIE['PHPSESSID'])) {
-            if ($_COOKIE['PHPSESSID'] !== session_id()) {
-                session_regenerate_id(true);
-            }
-            return true;
-        }
-        return false;
-    }
-
-    /**
-     * Sprawdza, czy użytkownik ma określoną rolę.
-     *
-     * @param string $role Rola do sprawdzenia
-     * @return bool True, jeśli użytkownik ma określoną rolę; false w przeciwnym razie
-     */
-    public function checkRole(string $role): bool
-    {
-        // Sprawdzenie czy użytkownik jest zalogowany
-        if (!isset($_SESSION['user_id']) || !isset($_COOKIE['PHPSESSID'])) {
-            return false;
-        }
-
-        // Jeśli sesja istnieje, sprawdzenie roli użytkownika
-        $userRole = $this->userModel->getUsersRole($_SESSION['user_id']);
-
-        if ($userRole === $role) {
-            // Dodatkowo, sprawdzenie czy sesja nadal jest zgodna z PHPSESSID
-            if ($_COOKIE['PHPSESSID'] !== session_id()) {
-                session_regenerate_id(true);
-            }
-            return true;
-        }
-
-        return false;
-    }
-
-    /**
      * Przykładowa metoda, która korzysta z klasy AuthHelpers do sanitizacji danych wejściowych.
      */
     public function someMethod()
@@ -104,8 +50,14 @@ class BaseController
         $sanitizedInput = AuthHelpers::sanitizeInput($_POST['input']);
     }
 
-    public function getUserId()
+    /**
+     * Zwraca repozytorium dla określonej encji.
+     *
+     * @param string $entityClass Nazwa klasy encji
+     * @return \Doctrine\ORM\EntityRepository
+     */
+    protected function getRepository(string $entityClass)
     {
-        return $this->userModel->getLoggedInUserId();
+        return $this->entityManager->getRepository($entityClass);
     }
 }

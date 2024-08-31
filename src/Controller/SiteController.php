@@ -2,26 +2,41 @@
 
 namespace App\Controller;
 
+use App\Entity\User;
+
 class SiteController extends BaseController
 {
     public function index()
     {
-        if ($this->checkLogged()) {
-            $role = $this->userModel->getUsersRole($_SESSION['user_id']);
-            header('Location: ' . getenv('BASE_URL')  . $role . '/dashboard');
+        // Sprawdzanie, czy użytkownik jest zalogowany
+        if (isset($_SESSION['user_id'])) {
+            $userRepository = $this->getRepository(User::class);
+            $user = $userRepository->findLoggedInUserById($_SESSION['user_id']);
+
+            if ($user) {
+                $role = $user->getRole();  // Zakładam, że masz metodę getRole w encji User
+                header('Location: ' . $_ENV("BASE_URL") . $role . '/dashboard');
+                exit();
+            }
         }
-        $lastRegistred = $this->userModel->getUsersSortedByRegistrationDate();
+
+        // Pobieranie ostatnio zarejestrowanych użytkowników
+        $userRepository = $this->getRepository(User::class);
+        $lastRegisteredUsers = $userRepository->findAllOrderedByRegistrationDate();
+
         $data = [
-            'lastRegistred' => $lastRegistred,
+            'lastRegisteredUsers' => $lastRegisteredUsers,
         ];
-        $this->view->render('home_page', $data);
+        $this->render('home_page', $data);
     }
+
     public function logout()
     {
         $userId = $_SESSION['user_id'] ?? null;
 
         if ($userId) {
-            $this->userModel->setUserOffline($userId);
+            $userRepository = $this->getRepository(User::class);
+            $userRepository->setUserLoggedOut($userId);
         }
 
         session_unset();

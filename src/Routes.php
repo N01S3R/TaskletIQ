@@ -63,6 +63,7 @@ class Routes
         } catch (Exception $e) {
             // Log the exception
             error_log($e->getMessage());
+            var_dump($e->getMessage());
             self::render500();
         }
     }

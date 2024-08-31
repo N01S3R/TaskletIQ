@@ -138,6 +138,12 @@
                     }
                 }
             }
+        },
+        mounted() {
+            // Symulacja opóźnienia ładowania
+            setTimeout(() => {
+                this.loading = false; // Ustawienie na false po załadowaniu strony
+            }, 1000); // Możesz dostosować czas opóźnienia
         }
     });
 </script>
