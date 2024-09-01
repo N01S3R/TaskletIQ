@@ -14,8 +14,9 @@ class SiteController extends BaseController
             $user = $userRepository->findLoggedInUserById($_SESSION['user_id']);
 
             if ($user) {
-                $role = $user->getRole();  // Zakładam, że masz metodę getRole w encji User
-                header('Location: ' . $_ENV("BASE_URL") . $role . '/dashboard');
+                $role = $user->getRole();
+                $redirectUrl = '/' . $role . '/dashboard';
+                header('Location: ' . $redirectUrl);
                 exit();
             }
         }
@@ -24,9 +25,18 @@ class SiteController extends BaseController
         $userRepository = $this->getRepository(User::class);
         $lastRegisteredUsers = $userRepository->findAllOrderedByRegistrationDate();
 
+        // Przygotowanie danych do wysłania
+        $processedUsers = array_map(function ($user) {
+            return [
+                'name' => $user->getName(),
+                'registrationDate' => $user->getRegistrationDate()->format('Y-m-d H:i:s')
+            ];
+        }, $lastRegisteredUsers);
+
         $data = [
-            'lastRegisteredUsers' => $lastRegisteredUsers,
+            'lastRegisteredUsers' => $processedUsers,
         ];
+
         $this->render('home_page', $data);
     }
 

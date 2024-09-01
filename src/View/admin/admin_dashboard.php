@@ -24,7 +24,7 @@
                                 <div class="row">
                                     <div class="col">
                                         <span class="h4 font-semibold text-muted text-sm d-block mb-2">Użytkownicy</span>
-                                        <span class="h4 font-bold mb-0">{{ allUsers.length }}</span>
+                                        <span class="h4 font-bold mb-0">{{ allUsers }}</span>
                                     </div>
                                     <div class="col-auto">
                                         <button class="btn btn-success rounded-circle">
@@ -46,7 +46,7 @@
                                 <div class="row">
                                     <div class="col">
                                         <span class="h4 font-semibold text-muted text-sm d-block mb-2">Projekty</span>
-                                        <span class="h4 font-bold mb-0">{{ projects.length }}</span>
+                                        <span class="h4 font-bold mb-0">{{ projects }}</span>
                                     </div>
                                     <div class="col-auto">
                                         <button class="btn btn-warning rounded-circle">
@@ -68,7 +68,7 @@
                                 <div class="row">
                                     <div class="col">
                                         <span class="h4 font-semibold text-muted text-sm d-block mb-2">Zadania</span>
-                                        <span class="h4 font-bold mb-0">{{ tasks.length }}</span>
+                                        <span class="h4 font-bold mb-0">{{ tasks }}</span>
                                     </div>
                                     <div class="col-auto">
                                         <button class="btn btn-info rounded-circle">
@@ -111,7 +111,7 @@
             projects: <?= json_encode($data['projects']) ?>,
             tasks: <?= json_encode($data['tasks']) ?>,
             loading: true,
-            projectsByMonth: <?= json_encode($data['projectsByMonth']) ?>
+
         },
         mounted() {
             this.$nextTick(() => {
@@ -119,52 +119,52 @@
                     this.loading = false;
                 }, 2000);
             });
-            this.renderChart();
+            // this.renderChart();
         },
         methods: {
-            renderChart() {
-                const canvas = document.getElementById('projectsChart');
-                if (canvas) {
-                    const ctx = canvas.getContext('2d');
+            // renderChart() {
+            //     const canvas = document.getElementById('projectsChart');
+            //     if (canvas) {
+            //         const ctx = canvas.getContext('2d');
 
-                    // Procesowanie danych
-                    const months = this.projectsByMonth.map(item => item.month);
-                    const counts = this.projectsByMonth.map(item => item.project_count);
+            //         // Procesowanie danych
+            //         const months = this.projectsByMonth.map(item => item.month);
+            //         const counts = this.projectsByMonth.map(item => item.project_count);
 
-                    new Chart(ctx, {
-                        type: 'bar',
-                        data: {
-                            labels: months,
-                            datasets: [{
-                                label: 'Liczba projektów',
-                                data: counts,
-                                backgroundColor: '#375a7f',
-                                borderColor: '#222222',
-                                borderWidth: 1
-                            }]
-                        },
-                        options: {
-                            responsive: true,
-                            scales: {
-                                x: {
-                                    beginAtZero: true
-                                },
-                                y: {
-                                    beginAtZero: true,
-                                    ticks: {
-                                        callback: function(value) {
-                                            // Formatowanie liczby całkowitej bez przecinków
-                                            return Number.isInteger(value) ? value : '';
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    });
-                } else {
-                    console.error('Element <canvas> o ID "projectsChart" nie został znaleziony.');
-                }
-            }
+            //         new Chart(ctx, {
+            //             type: 'bar',
+            //             data: {
+            //                 labels: months,
+            //                 datasets: [{
+            //                     label: 'Liczba projektów',
+            //                     data: counts,
+            //                     backgroundColor: '#375a7f',
+            //                     borderColor: '#222222',
+            //                     borderWidth: 1
+            //                 }]
+            //             },
+            //             options: {
+            //                 responsive: true,
+            //                 scales: {
+            //                     x: {
+            //                         beginAtZero: true
+            //                     },
+            //                     y: {
+            //                         beginAtZero: true,
+            //                         ticks: {
+            //                             callback: function(value) {
+            //                                 // Formatowanie liczby całkowitej bez przecinków
+            //                                 return Number.isInteger(value) ? value : '';
+            //                             }
+            //                         }
+            //                     }
+            //                 }
+            //             }
+            //         });
+            //     } else {
+            //         console.error('Element <canvas> o ID "projectsChart" nie został znaleziony.');
+            //     }
+            // }
         }
     });
 </script>

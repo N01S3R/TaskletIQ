@@ -37,9 +37,10 @@
                             <h5 class="card-title">Ostatnio zarejestrowani</h5>
                             <!-- Ostatnio zarejestrowani -->
                             <ul class="list-group">
-                                <?php foreach ($data["lastRegistred"] as $user) : ?>
-                                    <li class="list-group-item"><?= htmlspecialchars($user); ?></li>
-                                <?php endforeach; ?>
+                                <li v-for="user in users" :key="user.name" class="list-group-item">
+                                    <strong>Imię:</strong> {{ user.name }}
+                                    <!-- <strong>Data rejestracji:</strong> {{ user.registrationDate }} -->
+                                </li>
                             </ul>
                         </div>
                     </div>
@@ -49,17 +50,22 @@
     </div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/vue@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/vue@2.6.14/dist/vue.js"></script>
 <script>
-    var app = new Vue({
+    new Vue({
         el: '#app',
-        data: {
-            loading: true // Ustawienie początkowe na true, aby pokazać preloader
+        data() {
+            return {
+                loading: true,
+                users: []
+            }
         },
         mounted() {
             // Symulacja opóźnienia ładowania
             setTimeout(() => {
+                // Przykładowe dane, w rzeczywistości można je pobrać z serwera
+                this.users = <?php echo json_encode($data['lastRegisteredUsers']); ?>;
                 this.loading = false; // Ustawienie na false po załadowaniu strony
             }, 1000); // Możesz dostosować czas opóźnienia
         }

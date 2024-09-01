@@ -13,9 +13,9 @@ class LoginController extends BaseController
         if (isset($_SESSION['user_id'])) {
             $userId = (int)$_SESSION['user_id'];
             $userRepository = $this->getRepository(User::class);
-            $userRole = $userRepository->find($userId)->getRole(); // Zakładam, że metoda getRole jest dostępna
+            $userRole = $userRepository->find($userId)->getRole();
 
-            $redirectUrl = $_ENV("BASE_URL") . $userRole . '/dashboard';
+            $redirectUrl = '/' . $userRole . '/dashboard';
             header('Location: ' . $redirectUrl);
             exit;
         } else {
