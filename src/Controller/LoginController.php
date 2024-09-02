@@ -2,59 +2,48 @@
 
 namespace App\Controller;
 
-use App\Entity\User;
-use App\Helpers\AuthHelpers;
-
 class LoginController extends BaseController
 {
-    public function index()
+    /**
+     * Wyświetla formularz logowania lub przekierowuje zalogowanych użytkowników.
+     * 
+     * @return void
+     */
+    public function index(): void
     {
-        // Sprawdzanie, czy użytkownik jest już zalogowany
-        if (isset($_SESSION['user_id'])) {
-            $userId = (int)$_SESSION['user_id'];
-            $userRepository = $this->getRepository(User::class);
-            $userRole = $userRepository->find($userId)->getRole();
-
-            $redirectUrl = '/' . $userRole . '/dashboard';
+        if ($this->auth->getUserId()) {
+            // Sprawdzanie, czy użytkownik jest już zalogowany
+            $userRole = $this->auth->getUserRole();
+            $redirectUrl = getenv('BASE_URL') . $userRole . '/dashboard';
             header('Location: ' . $redirectUrl);
             exit;
         } else {
+            // Renderowanie formularza logowania
             $this->render('login_form');
         }
     }
 
-    public function login()
+    /**
+     * Przetwarza dane logowania użytkownika.
+     * 
+     * @return void
+     */
+    public function login(): void
     {
-        // Sprawdzanie, czy użytkownik jest już zalogowany
-        if (!isset($_SESSION['user_id'])) {
-            $username = AuthHelpers::sanitizeInput($_POST['username'] ?? '');
-            $password = AuthHelpers::sanitizeInput($_POST['password'] ?? '');
+        if (!$this->auth->getUserId()) {
+            $username = $_POST['username'] ?? '';
+            $password = $_POST['password'] ?? '';
 
-            if (AuthHelpers::validatePassword($password)) {
-                $userRepository = $this->getRepository(User::class);
-                $user = $userRepository->findByUsername($username);
+            $user = $this->auth->login($username, $password);
 
-                if ($user && password_verify($password, $user->getPassword())) {
-                    $userId = $user->getUserId();
-                    $userRole = $user->getRole();
-                    AuthHelpers::setSessionSecurityHeaders();
-
-                    // Ustawienie sesji użytkownika
-                    $_SESSION['user_id'] = $userId;
-
-                    // Ustawienie kolumny user_logged na 1 (online)
-                    $userRepository->setUserLoggedIn($userId);
-
-                    $redirectUrl = getenv('BASE_URL') . $userRole . '/dashboard';
-                    header('Location: ' . $redirectUrl);
-                    exit;
-                } else {
-                    // Obsługa błędnego logowania
-                    $this->render('login_form', ['error' => 'Niepoprawne dane']);
-                }
+            if ($user) {
+                $userRole = $user->getRole();
+                $redirectUrl = getenv('BASE_URL') . $userRole . '/dashboard';
+                header('Location: ' . $redirectUrl);
+                exit;
             } else {
-                // Obsługa błędnego hasła
-                $this->render('login_form', ['error' => 'Hasło musi mieć co najmniej 8 znaków']);
+                // Obsługa błędnego logowania
+                $this->render('login_form', ['error' => 'Niepoprawne dane']);
             }
         } else {
             // Użytkownik już zalogowany, przekieruj na stronę główną
@@ -62,22 +51,14 @@ class LoginController extends BaseController
         }
     }
 
-    public function logout()
+    /**
+     * Wylogowuje użytkownika i przekierowuje na stronę logowania.
+     * 
+     * @return void
+     */
+    public function logout(): void
     {
-        $userId = $_SESSION['user_id'] ?? null;
-
-        if ($userId) {
-            $userRepository = $this->getRepository(User::class);
-            $userRepository->setUserLoggedOut($userId); // Ustawienie kolumny user_logged na 0 (offline)
-        }
-
-        session_unset();
-        session_destroy();
-
-        if (isset($_COOKIE[session_name()])) {
-            setcookie(session_name(), '', time() - 3600, '/');
-        }
-        unset($_COOKIE['user_id']); // Usunięcie ciasteczka user_id
+        $this->auth->logout();
 
         header('Location: /login');
         exit();

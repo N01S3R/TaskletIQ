@@ -3,19 +3,34 @@
 namespace App\Controller;
 
 use App\View;
-use App\Config\DoctrineConfig;
+use App\Entity\User;
+use App\Service\Auth;
 use App\Helpers\AuthHelpers;
+use App\Config\DoctrineConfig;
 use Doctrine\ORM\EntityManager;
+use Doctrine\ORM\EntityRepository;
 
 class BaseController
 {
     protected $view;
     protected $entityManager;
+    protected $auth;
 
     public function __construct()
     {
         $this->view = new View();
         $this->entityManager = DoctrineConfig::createEntityManager();
+        $this->auth = $this->createAuth();
+    }
+
+    /**
+     * Tworzy instancję klasy Auth.
+     * 
+     * @return Auth
+     */
+    protected function createAuth(): Auth
+    {
+        return new Auth($this->getRepository(User::class));
     }
 
     /**
@@ -54,9 +69,20 @@ class BaseController
      * Zwraca repozytorium dla określonej encji.
      *
      * @param string $entityClass Nazwa klasy encji
-     * @return \Doctrine\ORM\EntityRepository
+     * @return EntityRepository
      */
-    protected function getRepository(string $entityClass)
+    protected function getRepository(string $entityClass): EntityRepository
+    {
+        return $this->entityManager->getRepository($entityClass);
+    }
+
+    /**
+     * Zwraca instancję repozytorium dla encji o nazwie $entityClass.
+     *
+     * @param string $entityClass Nazwa klasy encji
+     * @return object
+     */
+    protected function getEntity(string $entityClass)
     {
         return $this->entityManager->getRepository($entityClass);
     }
