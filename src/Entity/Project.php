@@ -24,7 +24,7 @@ class Project
 
     /**
      * @ORM\ManyToOne(targetEntity="User", inversedBy="projects")
-     * @ORM\JoinColumn(name="user_id", referencedColumnName="user_id", nullable=true)
+     * @ORM\JoinColumn(name="user_id", referencedColumnName="user_id")
      */
     private $user;
 

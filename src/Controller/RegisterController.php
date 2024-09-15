@@ -5,22 +5,13 @@ namespace App\Controller;
 use App\Entity\User;
 use App\Service\Auth;
 use App\Helpers\AuthHelpers;
-use App\Repository\UserRepository;
+use Doctrine\ORM\EntityManager;
 
 class RegisterController extends BaseController
 {
-    private UserRepository $userRepository;
-
-    /**
-     * Konstruktor klasy RegisterController.
-     * 
-     * @param Auth $auth Instancja serwisu Auth
-     * @param UserRepository $userRepository Instancja repozytorium użytkowników
-     */
-    public function __construct(Auth $auth, UserRepository $userRepository)
+    public function __construct(EntityManager $entityManager)
     {
-        parent::__construct($auth);
-        $this->userRepository = $userRepository;
+        parent::__construct($entityManager);
     }
 
     /**
@@ -81,7 +72,6 @@ class RegisterController extends BaseController
             }
         }
     }
-
 
     /**
      * Waliduje dane rejestracji.

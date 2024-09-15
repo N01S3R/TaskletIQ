@@ -40,7 +40,9 @@ class Auth
 
             if ($user && password_verify($password, $user->getPassword())) {
                 $_SESSION['user_id'] = $user->getUserId();
+                $_SESSION['user_name'] = $user->getName();
                 $_SESSION['user_role'] = $user->getRole();
+                $_SESSION['user_avatar'] = $user->getAvatar();
                 AuthHelpers::setSessionSecurityHeaders();
                 $this->userRepository->setUserLoggedIn($user->getUserId());
 

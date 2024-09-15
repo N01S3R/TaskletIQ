@@ -6,7 +6,6 @@ use App\View;
 use App\Entity\User;
 use App\Service\Auth;
 use App\Helpers\AuthHelpers;
-use App\Config\DoctrineConfig;
 use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\EntityRepository;
 
@@ -16,10 +15,10 @@ class BaseController
     protected $entityManager;
     protected $auth;
 
-    public function __construct()
+    public function __construct(EntityManager $entityManager)
     {
         $this->view = new View();
-        $this->entityManager = DoctrineConfig::createEntityManager();
+        $this->entityManager = $entityManager;
         $this->auth = $this->createAuth();
     }
 

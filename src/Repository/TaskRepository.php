@@ -51,4 +51,43 @@ class TaskRepository extends EntityRepository
             ->getQuery()
             ->getSingleScalarResult();
     }
+
+    /**
+     * Zwraca zadania przypisane do użytkownika wraz z informacjami o projektach.
+     *
+     * @param int $userId
+     * @return array
+     */
+    public function getTasksByUserIdWithProjects(int $userId): array
+    {
+        // Tworzymy zapytanie do pobrania zadań oraz powiązanych projektów
+        $qb = $this->createQueryBuilder('t')
+            ->innerJoin('t.project', 'p')
+            ->innerJoin('p.user', 'u')
+            ->where('u.userId = :userId')
+            ->setParameter('userId', $userId)
+            ->addSelect('p')
+            ->getQuery();
+
+        return $qb->getArrayResult();
+    }
+
+    /**
+     * Zlicza zadania o określonym poziomie postępu dla danego użytkownika.
+     *
+     * @param int $userId
+     * @param int $progress
+     * @return int
+     */
+    public function getTasksByProgress(int $userId, int $progress): int
+    {
+        return $this->createQueryBuilder('t')
+            ->select('COUNT(t.taskId)')
+            ->where('t.user = :userId')
+            ->andWhere('t.taskProgress = :progress')
+            ->setParameter('userId', $userId)
+            ->setParameter('progress', $progress)
+            ->getQuery()
+            ->getSingleScalarResult();
+    }
 }

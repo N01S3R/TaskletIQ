@@ -4,6 +4,8 @@ namespace App;
 
 use App\View;
 use App\Controller\ControllerFactory;
+use Doctrine\ORM\EntityManager;
+use App\Config\DoctrineConfig;
 use Exception;
 
 class Routes
@@ -20,6 +22,9 @@ class Routes
 
             $matched = false;
 
+            // Tworzymy EntityManager
+            $entityManager = DoctrineConfig::createEntityManager();
+
             foreach ($routes as $route => $methods) {
                 if (preg_match("~^$route$~", $path, $matches)) {
                     $requestMethod = $_SERVER['REQUEST_METHOD'];
@@ -29,7 +34,8 @@ class Routes
                         $controllerName = $parts[0];
                         $methodName = $parts[1];
 
-                        $controller = ControllerFactory::create($controllerName);
+                        // Tworzymy kontroler z EntityManager
+                        $controller = ControllerFactory::create($controllerName, $entityManager);
 
                         if (method_exists($controller, $methodName)) {
                             $params = array_slice($matches, 1);

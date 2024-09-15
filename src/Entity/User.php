@@ -52,6 +52,16 @@ class User
      */
     private $registrationDate;
 
+    /**
+     * @ORM\Column(type="string", length=255, name="user_avatar", nullable=true)
+     */
+    private $avatar;
+
+    /**
+     * @ORM\OneToMany(targetEntity="Project", mappedBy="user_id")
+     */
+    private $projects;
+
     // Gettery i settery
     public function getUserId()
     {
@@ -101,5 +111,15 @@ class User
     public function setRegistrationDate(\DateTime $registrationDate): void
     {
         $this->registrationDate = $registrationDate;
+    }
+
+    public function getAvatar()
+    {
+        return $this->avatar;
+    }
+
+    public function setAvatar(?string $avatar): void
+    {
+        $this->avatar = $avatar;
     }
 }

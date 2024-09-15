@@ -13,9 +13,6 @@ $webRoutes = [
         'GET' => 'RegisterController@index',
         'POST' => 'RegisterController@register'
     ],
-    '/validate-field' => [
-        'POST' => 'RegisterController@validateField'
-    ],
     '/logout' => [
         'GET' => 'SiteController@logout',
     ],

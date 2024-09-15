@@ -1,6 +1,10 @@
 <?php
 
 $apiRoutes = [
+    // Site
+    '/validate-field' => [
+        'GET' => 'RegisterController@validateSignupData'
+    ],
     // Creator
     '/api/project/add' => [
         'POST' => 'ProjectController@createProject'

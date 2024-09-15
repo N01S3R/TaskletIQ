@@ -49,13 +49,13 @@ class Task
 
     /**
      * @ORM\ManyToOne(targetEntity="Project", inversedBy="tasks")
-     * @ORM\JoinColumn(name="project_id", referencedColumnName="project_id", nullable=true)
+     * @ORM\JoinColumn(name="project_id", referencedColumnName="project_id")
      */
     private $project;
 
     /**
-     * @ORM\ManyToOne(targetEntity="User", inversedBy="tasks")
-     * @ORM\JoinColumn(name="user_id", referencedColumnName="user_id", nullable=true)
+     * @ORM\ManyToOne(targetEntity="User", inversedBy="projects")
+     * @ORM\JoinColumn(name="user_id", referencedColumnName="user_id")
      */
     private $user;
 

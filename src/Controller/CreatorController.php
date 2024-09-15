@@ -2,27 +2,34 @@
 
 namespace App\Controller;
 
+use App\Entity\Task;
 use App\View;
 use PDOException;
+use Doctrine\ORM\EntityManager;
 
 class CreatorController extends BaseController
 {
+    public function __construct(EntityManager $entityManager)
+    {
+        parent::__construct($entityManager);
+    }
+
     /**
      * Wyświetla pulpit twórcy z zadaniami.
      * Sprawdza uprawnienia użytkownika i wyświetla odpowiednią stronę.
      */
     public function displayDashboard(): void
     {
-        if ($this->checkRole('creator')) {
-            $userId = $this->userModel->getLoggedInUserId();
-
+        if ($this->auth->getUserId()) {
+            $userId = $this->auth->getUserId();
+            $taskRepository = $this->getRepository(Task::class);
             // Przygotowanie danych dla pulpit twórcy
             $data = [
                 'pageTitle' => 'Pulpit',
-                'tasksCount' => count($this->creatorModel->getTasksByUserIdWithProjects($userId)),
-                'tasksStart' => count($this->creatorModel->getTasksByProgress(1)),
-                'tasksInProgress' => count($this->creatorModel->getTasksByProgress(2)),
-                'tasksDone' => count($this->creatorModel->getTasksByProgress(3)),
+                'tasksCount' => count($taskRepository->getTasksByUserIdWithProjects($userId)),
+                'tasksStart' => $taskRepository->getTasksByProgress($userId, 1),
+                'tasksInProgress' => $taskRepository->getTasksByProgress($userId, 2),
+                'tasksDone' => $taskRepository->getTasksByProgress($userId, 3),
             ];
             $this->view->render('creator/creator_dashboard', $data);
         } else {
@@ -37,9 +44,10 @@ class CreatorController extends BaseController
      */
     public function displayAllTasks(): void
     {
-        if ($this->checkRole('creator')) {
-            $userId = $this->userModel->getLoggedInUserId();
-            $tasks = $this->projectModel->getProjectsByUserIdWithTasks($userId);
+        if ($this->auth->getUserId()) {
+            $userId = $this->auth->getUserId();
+            $taskRepository = $this->getRepository(Task::class);
+            $tasks = $taskRepository->getTasksByUserIdWithProjects($userId);
 
             $data = [
                 'pageTitle' => 'Wszystkie zadania',
@@ -60,7 +68,7 @@ class CreatorController extends BaseController
     public function displayTasksByProgress($progressId): void
     {
         // Sprawdzenie poprawności identyfikatora postępu
-        if ($this->checkRole('creator') && in_array($progressId, [1, 2, 3])) {
+        if ($this->auth->getUserId() && in_array($progressId, [1, 2, 3])) {
             // Przekierowanie na stronę 404 jeśli identyfikator postępu nie jest 1, 2 lub 3
 
 
@@ -121,7 +129,7 @@ class CreatorController extends BaseController
      */
     public function displayDelegateForm(): void
     {
-        if ($this->checkRole('creator')) {
+        if ($this->auth->getUserId()) {
             $loggedInUserId = $this->userModel->getLoggedInUserId();
             $projects = $this->projectModel->getProjectsByUserIdWithTasks($loggedInUserId);
             $users = $this->creatorModel->getAllUsersByToken();
@@ -146,7 +154,7 @@ class CreatorController extends BaseController
         $responseData = [];
 
         // Sprawdzenie uprawnień użytkownika
-        if (!$this->checkRole('creator')) {
+        if (!$this->auth->getUserId()) {
             $responseData['error'] = 'Brak odpowiednich uprawnień do wykonania tej operacji.';
             echo json_encode($responseData);
             return;
