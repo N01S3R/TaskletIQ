@@ -23,9 +23,16 @@ class ProjectRepository extends EntityRepository
      * @param int $projectId
      * @return Project|null
      */
-    public function getProjectById(int $projectId): ?Project
+    public function getProjectById(int $projectId, int $userId): ?Project
     {
-        return $this->find($projectId);
+        return $this->createQueryBuilder('p')
+            ->join('p.user', 'u')
+            ->where('p.projectId = :projectId')
+            ->andWhere('u.userId = :userId')
+            ->setParameter('projectId', $projectId)
+            ->setParameter('userId', $userId)
+            ->getQuery()
+            ->getOneOrNullResult();
     }
 
     /**
@@ -36,7 +43,12 @@ class ProjectRepository extends EntityRepository
      */
     public function getProjectsByUserId(int $userId): array
     {
-        return $this->findBy(['userId' => $userId]);
+        return $this->createQueryBuilder('p')
+            ->join('p.user', 'u')
+            ->where('u.userId = :userId')
+            ->setParameter('userId', $userId)
+            ->getQuery()
+            ->getResult();
     }
 
     /**
@@ -82,5 +94,53 @@ class ProjectRepository extends EntityRepository
             ->select('COUNT(p.projectId)')
             ->getQuery()
             ->getSingleScalarResult();
+    }
+
+    /**
+     * Pobiera zadania przypisane do projektu na podstawie jego ID.
+     *
+     * @param int $projectId ID projektu.
+     * @return array Tablica zadań przypisanych do projektu.
+     */
+    public function getTasksByProjectId($projectId): array
+    {
+        $project = $this->find($projectId);
+        return $project ? $project->getTasks()->toArray() : [];
+    }
+
+    /**
+     * Pobiera projekty przypisane do danego użytkownika wraz z zadaniami w uproszczonej formie.
+     *
+     * @param int $userId Identyfikator użytkownika, którego projekty mają zostać pobrane.
+     * @return array Tablica projektów z przypisanymi zadaniami jako tablice.
+     */
+    public function getProjectsWithTasksByUserId(int $userId): array
+    {
+        $projects = $this->createQueryBuilder('p')
+            ->leftJoin('p.tasks', 't')
+            ->join('p.user', 'u')
+            ->where('u.userId = :userId')
+            ->setParameter('userId', $userId)
+            ->addSelect('t')
+            ->getQuery()
+            ->getResult();
+
+        $cleanProjects = [];
+        foreach ($projects as $project) {
+            $cleanProjects[] = [
+                'project_id' => $project->getProjectId(),
+                'project_name' => $project->getProjectName(),
+                'tasks' => array_map(function ($task) {
+                    return [
+                        'task_id' => $task->getTaskId(),
+                        'task_name' => $task->getTaskName(),
+                        'task_progress' => $task->getTaskProgress(),
+                        'task_description' => $task->getTaskDescription(),
+                    ];
+                }, $project->getTasks()->toArray() ?: []),
+            ];
+        }
+
+        return $cleanProjects;
     }
 }

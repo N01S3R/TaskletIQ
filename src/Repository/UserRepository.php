@@ -2,8 +2,12 @@
 
 namespace App\Repository;
 
-use Doctrine\ORM\EntityRepository;
+use App\Entity\Task;
 use App\Entity\User;
+use App\Entity\Project;
+use Doctrine\ORM\EntityRepository;
+use Doctrine\Common\Collections\Collection;
+use Doctrine\Common\Collections\ArrayCollection;
 
 class UserRepository extends EntityRepository
 {
@@ -129,5 +133,77 @@ class UserRepository extends EntityRepository
             ->select('COUNT(u.userId)')
             ->getQuery()
             ->getSingleScalarResult();
+    }
+
+    /**
+     * Dodaje projekt do użytkownika.
+     *
+     * @param User $user
+     * @param Project $project
+     * @return void
+     */
+    public function addProjectToUser(User $user, Project $project): void
+    {
+        $user->getProjects()->add($project);
+        $this->_em->persist($user);
+        $this->_em->flush();
+    }
+
+    /**
+     * Usuwa projekt od użytkownika.
+     *
+     * @param User $user
+     * @param Project $project
+     * @return void
+     */
+    public function removeProjectFromUser(User $user, Project $project): void
+    {
+        $user->getProjects()->removeElement($project);
+        $this->_em->persist($user);
+        $this->_em->flush();
+    }
+
+    /**
+     * Dodaje zadanie do użytkownika.
+     *
+     * @param User $user
+     * @param Task $task
+     * @return void
+     */
+    public function addTaskToUser(User $user, Task $task): void
+    {
+        $user->getTasks()->add($task);
+        $this->_em->persist($user);
+        $this->_em->flush();
+    }
+
+    /**
+     * Usuwa zadanie od użytkownika.
+     *
+     * @param User $user
+     * @param Task $task
+     * @return void
+     */
+    public function removeTaskFromUser(User $user, Task $task): void
+    {
+        $user->getTasks()->removeElement($task);
+        $this->_em->persist($user);
+        $this->_em->flush();
+    }
+
+    /**
+     * Znajduje użytkowników z tym samym tokenem rejestracyjnym.
+     *
+     * @param string $registrationToken
+     * @return array
+     */
+    public function findUsersByRegistrationToken(string $registrationToken): array
+    {
+        $qb = $this->createQueryBuilder('u')
+            ->select('u.userId, u.username, u.email') // Wybierz tylko potrzebne pola
+            ->where('u.registrationToken = :registrationToken')
+            ->setParameter('registrationToken', $registrationToken);
+
+        return $qb->getQuery()->getArrayResult(); // Zwróć wynik jako tablicę
     }
 }

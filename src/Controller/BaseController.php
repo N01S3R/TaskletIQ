@@ -15,6 +15,11 @@ class BaseController
     protected $entityManager;
     protected $auth;
 
+    /**
+     * Konstruktor klasy BaseController.
+     * 
+     * @param EntityManager $entityManager Obiekt EntityManager
+     */
     public function __construct(EntityManager $entityManager)
     {
         $this->view = new View();
@@ -75,14 +80,31 @@ class BaseController
         return $this->entityManager->getRepository($entityClass);
     }
 
+    // /**
+    //  * Zwraca instancję repozytorium dla encji o nazwie $entityClass.
+    //  *
+    //  * @param string $entityClass Nazwa klasy encji
+    //  * @return object
+    //  */
+    // protected function getEntity(string $entityClass)
+    // {
+    //     return $this->entityManager->getRepository($entityClass);
+    // }
+
     /**
-     * Zwraca instancję repozytorium dla encji o nazwie $entityClass.
+     * Sprawdza, czy aktualny użytkownik ma określoną rolę.
      *
-     * @param string $entityClass Nazwa klasy encji
-     * @return object
+     * @param string $role Nazwa roli
+     * @return bool
      */
-    protected function getEntity(string $entityClass)
+    protected function checkRole(string $role): bool
     {
-        return $this->entityManager->getRepository($entityClass);
+        $userId = $this->auth->getUserId();
+        if ($userId) {
+            $userRepository = $this->entityManager->getRepository(User::class);
+            $user = $userRepository->find($userId);
+            return $user && $user->hasRole($role);
+        }
+        return false;
     }
 }

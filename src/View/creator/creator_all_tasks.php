@@ -19,23 +19,30 @@
                 </a>
             </div>
         </header>
-        <div v-if="isEmpty(tasks)" class="alert alert-danger alert-dismissible fade show" role="alert">
-            <strong>Brak zadań!</strong> Nie znaleziono żadnych zadań do wyświetlenia.
+
+        <div v-if="isEmpty(projects)" class="alert alert-danger alert-dismissible fade show" role="alert">
+            <strong>Brak projektów!</strong> Nie znaleziono żadnych projektów do wyświetlenia.
         </div>
+
         <div v-else>
-            <div v-for="(project, index) in tasks" :key="index" class="card mt-3">
+            <div v-for="(project, index) in projects" :key="index" class="card mt-3">
                 <div class="card-header bg-info mb-3">
                     <h4>Projekt: {{ project.project_name }}</h4>
                 </div>
                 <div class="card-body">
-                    <div class="row">
-                        <div v-for="task in project.tasks" :key="task.task_id" class="col-md-4 p-3">
-                            <a :href="'/creator/project/' + project.project_id" class="card text-white bg-primary mb-3" style="text-decoration: none;">
-                                <div class="card-header">{{ task.task_name }}</div>
-                                <div class="card-body p-4">
-                                    <p class="card-text">Opis zadania: {{ task.task_description }}</p>
-                                </div>
-                            </a>
+                    <div v-if="isEmpty(project.tasks)" class="alert alert-warning" role="alert">
+                        Brak zadań w tym projekcie.
+                    </div>
+                    <div v-else>
+                        <div class="row">
+                            <div v-for="(task, taskIndex) in project.tasks" :key="taskIndex" class="col-md-4">
+                                <a :href="'/creator/project/' + project.project_id" class="card text-white bg-primary mb-3" style="text-decoration: none;">
+                                    <div class="card-header">Zadanie: {{ task.task_name }}</div>
+                                    <div class="card-body p-4">
+                                        <p class="card-text">Opis: {{ task.task_description }}</p>
+                                    </div>
+                                </a>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -57,22 +64,23 @@
             return {
                 loading: true,
                 pageTitle: <?php echo json_encode($data['pageTitle']); ?>,
-                tasks: <?php echo json_encode($data['tasks']); ?>
+                projects: <?php echo json_encode($data['projects']); ?>
             };
         },
         methods: {
             isEmpty(obj) {
-                return obj.length === 0;
+                return !Array.isArray(obj) || obj.length === 0;
             }
         },
         mounted() {
             // Symulacja opóźnienia ładowania
             setTimeout(() => {
                 this.loading = false; // Ustawienie na false po załadowaniu strony
-            }, 1000); // Możesz dostosować czas opóźnienia
+            }, 1000);
         }
     }).mount('#app');
 </script>
+
 
 </body>
 

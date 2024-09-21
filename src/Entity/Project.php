@@ -29,6 +29,11 @@ class Project
     private $user;
 
     /**
+     * @ORM\OneToMany(targetEntity="Task", mappedBy="project")
+     */
+    private $tasks;
+
+    /**
      * @ORM\Column(type="datetime", name="created_at", nullable=true)
      */
     private $createdAt;
@@ -61,6 +66,18 @@ class Project
     {
         $this->user = $user;
 
+        return $this;
+    }
+
+    public function getTasks(): ?\Doctrine\Common\Collections\Collection
+    {
+        return $this->tasks;
+    }
+
+    public function addTask(Task $task): self
+    {
+        $this->tasks[] = $task;
+        $task->setProject($this);
         return $this;
     }
 

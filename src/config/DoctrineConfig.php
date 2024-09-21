@@ -24,7 +24,7 @@ class DoctrineConfig
             null,
             false
         );
-
+        $config->setAutoGenerateProxyClasses(true);
         // Konfiguracja połączenia z bazą danych
         $conn = [
             'driver'   => 'pdo_mysql',
@@ -32,6 +32,7 @@ class DoctrineConfig
             'dbname'   => $_ENV['DB_NAME'],
             'user'     => $_ENV['DB_USER'],
             'password' => $_ENV['DB_PASSWORD'],
+            'charset'  => 'utf8mb4',
         ];
 
         return EntityManager::create($conn, $config);

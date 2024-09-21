@@ -34,10 +34,10 @@
                     <div class="card-body">
                         <h3 class="float-end">
                             <span class="badge" :class="task.task_color">{{ task.task_status }}</span>
-                            <button type="button" class="btn btn-info btn-sm" @click="openShowTaskModal(task)">
+                            <button type="button" class="btn btn-info btn-sm mx-2" @click="openShowTaskModal(task)">
                                 <i class="bi bi-eye"></i>
                             </button>
-                            <button type="button" class="btn btn-primary btn-sm" @click="openEditTaskModal(task)">
+                            <button type="button" class="btn btn-primary btn-sm me-2" @click="openEditTaskModal(task)">
                                 <i class="bi bi-pencil"></i>
                             </button>
                             <button type="button" class="btn btn-danger btn-sm" @click="openDeleteTaskModal(task)">
@@ -113,7 +113,7 @@
                         <h5>Opis zadania:</h5>
                         <p class="text-break bg-light bg-opacity-25 rounded p-2">{{ editedTask.task_description }}</p>
                         <h5>Długi Opis zadania:</h5>
-                        <p class="text-break bg-light bg-opacity-25 rounded p-2" v-html="formatNewLines(editedTask.task_description_long)"></p>
+                        <textarea v-model="editedTask.task_description_long" class="form-control mb-3 bg-light bg-opacity-25 text-white" rows="5" placeholder="Długi Opis zadania" disabled></textarea>
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Zamknij</button>
@@ -156,6 +156,7 @@
                 newTaskName: '',
                 newTaskDescription: '',
                 newTaskDescriptionLong: '',
+                newTaskColor: '',
                 taskToDelete: null,
                 editedTask: {},
             };
@@ -171,6 +172,7 @@
                         task_name: this.newTaskName,
                         task_description: this.newTaskDescription,
                         task_description_long: this.newTaskDescriptionLong,
+                        task_color: this.newTaskColor,
                     })
                     .then((response) => {
                         if (response.data.success) {
@@ -249,7 +251,6 @@
                     });
             },
             openEditTaskModal(task) {
-                console.log("Task being edited:", task);
                 this.editedTask = task;
                 const myModal = new bootstrap.Modal(document.getElementById('editTaskModal'));
                 myModal.show();

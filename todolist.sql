@@ -1,11 +1,11 @@
 -- phpMyAdmin SQL Dump
--- version 5.1.1
+-- version 5.2.1
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost:3306
--- Czas generowania: 28 Sie 2024, 16:51
--- Wersja serwera: 5.7.33
--- Wersja PHP: 8.0.10
+-- Generation Time: Wrz 21, 2024 at 04:42 PM
+-- Wersja serwera: 8.0.32
+-- Wersja PHP: 8.1.29
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 START TRANSACTION;
@@ -18,7 +18,7 @@ SET time_zone = "+00:00";
 /*!40101 SET NAMES utf8mb4 */;
 
 --
--- Baza danych: `todolist`
+-- Database: `todolist`
 --
 
 -- --------------------------------------------------------
@@ -28,11 +28,11 @@ SET time_zone = "+00:00";
 --
 
 CREATE TABLE `projects` (
-  `project_id` int(11) NOT NULL,
-  `project_name` varchar(255) DEFAULT NULL,
-  `user_id` int(11) DEFAULT NULL,
+  `project_id` int NOT NULL,
+  `project_name` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `user_id` int DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP
-) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
 
@@ -41,16 +41,16 @@ CREATE TABLE `projects` (
 --
 
 CREATE TABLE `tasks` (
-  `task_id` int(11) NOT NULL,
-  `task_name` varchar(255) DEFAULT NULL,
-  `task_description` text,
-  `task_description_long` text NOT NULL,
+  `task_id` int NOT NULL,
+  `task_name` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `task_description` mediumtext COLLATE utf8mb4_unicode_ci,
+  `task_description_long` mediumtext COLLATE utf8mb4_unicode_ci NOT NULL,
   `task_created_at` timestamp NULL DEFAULT NULL,
-  `task_progress` int(11) DEFAULT '0',
-  `task_status` varchar(50) DEFAULT 'Nowy',
-  `project_id` int(11) DEFAULT NULL,
-  `user_id` int(11) DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+  `task_progress` int DEFAULT '0',
+  `task_status` varchar(50) COLLATE utf8mb4_unicode_ci DEFAULT 'Nowy',
+  `project_id` int DEFAULT NULL,
+  `user_id` int DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
 
@@ -59,10 +59,10 @@ CREATE TABLE `tasks` (
 --
 
 CREATE TABLE `tasks_users` (
-  `id` int(11) NOT NULL,
-  `task_id` int(11) DEFAULT NULL,
-  `user_id` int(11) DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+  `id` int NOT NULL,
+  `task_id` int DEFAULT NULL,
+  `user_id` int DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
 
@@ -71,11 +71,11 @@ CREATE TABLE `tasks_users` (
 --
 
 CREATE TABLE `tokens` (
-  `id` int(11) NOT NULL,
-  `token` varchar(255) NOT NULL,
-  `user_id` int(11) NOT NULL,
+  `id` int NOT NULL,
+  `token` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `user_id` int NOT NULL,
   `expiration` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP
-) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
 
@@ -84,16 +84,17 @@ CREATE TABLE `tokens` (
 --
 
 CREATE TABLE `users` (
-  `user_id` int(11) NOT NULL,
-  `user_login` varchar(255) NOT NULL,
-  `user_password` varchar(255) NOT NULL,
-  `user_name` varchar(255) DEFAULT NULL,
-  `user_email` varchar(255) NOT NULL,
-  `user_role` varchar(50) NOT NULL,
-  `registration_token` varchar(255) DEFAULT NULL,
-  `user_avatar` varchar(255) DEFAULT NULL,
-  `registration_date` timestamp NULL DEFAULT CURRENT_TIMESTAMP
-) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+  `user_id` int NOT NULL,
+  `user_login` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `user_password` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `user_name` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `user_email` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `user_role` varchar(50) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `registration_token` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `user_avatar` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `registration_date` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `user_logged` tinyint(1) NOT NULL DEFAULT '0'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
 
@@ -102,10 +103,10 @@ CREATE TABLE `users` (
 --
 
 CREATE TABLE `user_status` (
-  `user_id` int(11) NOT NULL,
-  `status` enum('online','offline','away') NOT NULL,
+  `user_id` int NOT NULL,
+  `status` enum('online','offline','away') COLLATE utf8mb4_unicode_ci NOT NULL,
   `last_activity` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
 -- Indeksy dla zrzutów tabel
@@ -154,58 +155,58 @@ ALTER TABLE `user_status`
   ADD PRIMARY KEY (`user_id`);
 
 --
--- AUTO_INCREMENT dla zrzuconych tabel
+-- AUTO_INCREMENT for dumped tables
 --
 
 --
--- AUTO_INCREMENT dla tabeli `projects`
+-- AUTO_INCREMENT for table `projects`
 --
 ALTER TABLE `projects`
-  MODIFY `project_id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `project_id` int NOT NULL AUTO_INCREMENT;
 
 --
--- AUTO_INCREMENT dla tabeli `tasks`
+-- AUTO_INCREMENT for table `tasks`
 --
 ALTER TABLE `tasks`
-  MODIFY `task_id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `task_id` int NOT NULL AUTO_INCREMENT;
 
 --
--- AUTO_INCREMENT dla tabeli `tasks_users`
+-- AUTO_INCREMENT for table `tasks_users`
 --
 ALTER TABLE `tasks_users`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT;
 
 --
--- AUTO_INCREMENT dla tabeli `tokens`
+-- AUTO_INCREMENT for table `tokens`
 --
 ALTER TABLE `tokens`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT;
 
 --
--- AUTO_INCREMENT dla tabeli `users`
+-- AUTO_INCREMENT for table `users`
 --
 ALTER TABLE `users`
-  MODIFY `user_id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `user_id` int NOT NULL AUTO_INCREMENT;
 
 --
--- Ograniczenia dla zrzutów tabel
+-- Constraints for dumped tables
 --
 
 --
--- Ograniczenia dla tabeli `tasks`
+-- Constraints for table `tasks`
 --
 ALTER TABLE `tasks`
   ADD CONSTRAINT `fk_project` FOREIGN KEY (`project_id`) REFERENCES `projects` (`project_id`);
 
 --
--- Ograniczenia dla tabeli `tasks_users`
+-- Constraints for table `tasks_users`
 --
 ALTER TABLE `tasks_users`
   ADD CONSTRAINT `fk_task` FOREIGN KEY (`task_id`) REFERENCES `tasks` (`task_id`) ON DELETE CASCADE ON UPDATE CASCADE,
   ADD CONSTRAINT `fk_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`);
 
 --
--- Ograniczenia dla tabeli `tokens`
+-- Constraints for table `tokens`
 --
 ALTER TABLE `tokens`
   ADD CONSTRAINT `tokens_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`);

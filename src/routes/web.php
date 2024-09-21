@@ -28,7 +28,7 @@ $webRoutes = [
         'GET' => 'ProjectController@displayAllProjects'
     ],
     '/creator/tasks' => [
-        'GET' => 'CreatorController@displayAllTasks'
+        'GET' => 'TaskController@displayAllTasks'
     ],
     '/creator/tasks/(\d+)' => [
         'GET' => 'CreatorController@displayTasksByProgress'

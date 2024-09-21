@@ -2,7 +2,9 @@
 
 namespace App\Controller;
 
+use App\Entity\Project;
 use App\View;
+use App\Entity\Task;
 
 /**
  * Kontroler obsługujący operacje na zadaniach.
@@ -10,13 +12,26 @@ use App\View;
 class TaskController extends BaseController
 {
     /**
-     * Wyświetla stronę główną z listą zadań.
-     *
-     * @return void
+     * Wyświetla wszystkie zadania użytkownika.
+     * Sprawdza czy użytkownik jest zalogowany przed wyświetleniem zadań.
      */
-    public function index(): void
+    public function displayAllTasks(): void
     {
-        // Implementacja zostanie dodana
+        if ($this->auth->getUserId()) {
+            $userId = $this->auth->getUserId();
+            $projectRepository = $this->getRepository(Project::class);
+            $projectsWithTasks = $projectRepository->getProjectsWithTasksByUserId($userId);
+
+            $data = [
+                'pageTitle' => 'Wszystkie zadania',
+                'projects' => $projectsWithTasks
+            ];
+
+            $this->render('creator/creator_all_tasks', $data);
+        } else {
+            header('Location: /login');
+            exit();
+        }
     }
 
     /**
@@ -28,89 +43,79 @@ class TaskController extends BaseController
     {
         // Sprawdź rolę użytkownika
         if (!$this->checkRole('creator')) {
-            // Przekierowanie na stronę logowania, jeśli użytkownik nie ma odpowiedniej roli
             header('Location: /login');
             exit();
         }
 
-        // Utwórz tablicę, która będzie przechowywać dane odpowiedzi
         $responseData = [];
-
-        // Pobierz dane z ciała żądania
         $requestData = json_decode(file_get_contents('php://input'), true);
 
-        // Pobierz dane z ciała żądania
-        $project_id = $requestData['project_id'] ?? null;
+        // Używaj operatora ?? do przypisania wartości domyślnych
+        $projectId = $requestData['project_id'] ?? null;
         $title = $requestData['task_name'] ?? null;
         $description = $requestData['task_description'] ?? null;
         $descriptionLong = $requestData['task_description_long'] ?? null;
+        $userId = $this->auth->getUserId();
 
-        // Pobierz identyfikator zalogowanego użytkownika
-        $userId = $this->getUserId();
-
-        // Sprawdź, czy wszystkie pola zostały wypełnione
-        if (empty($project_id) || empty($title) || empty($description) || empty($descriptionLong)) {
-            // Ustaw odpowiedź na błąd
+        // Sprawdź, czy wszystkie wymagane dane są dostępne
+        if (empty($projectId) || empty($title) || empty($description) || empty($descriptionLong)) {
             $responseData['error'] = 'Wszystkie pola muszą być wypełnione.';
         } else {
-            // Sprawdź, czy $userId nie jest null i jest integerem
+            // Upewnij się, że userId jest prawidłowy
             if ($userId !== null && is_int($userId)) {
-                // Sprawdź, czy takie zadanie już istnieje w bazie
-                if ($this->taskModel->taskExists($title, $userId)) {
-                    // Ustaw odpowiedź na błąd
-                    $responseData['error'] = 'Zadanie o podanej nazwie i tytule już istnieje.';
+                $taskRepository = $this->getRepository(Task::class);
+
+                // Sprawdź, czy zadanie o tej samej nazwie już istnieje
+                if ($taskRepository->taskExists($title, $userId)) {
+                    $responseData['error'] = 'Zadanie o podanej nazwie już istnieje.';
                 } else {
                     // Dodaj nowe zadanie
-                    $taskId = $this->taskModel->addTask((int)$project_id, $title, $description, $descriptionLong, $userId);
+                    $newTask = $taskRepository->addTask($projectId, $title, $description, $descriptionLong, $userId);
+                    $responseData['success'] = 'Dodano zadanie "' . htmlspecialchars($title) . '"';
 
-                    // Sprawdź, czy dodanie zadania powiodło się
-                    if ($taskId !== false) {
-                        // Pobierz szczegóły dodanego zadania
-                        $newTask = $this->taskModel->getTaskById($taskId, $userId);
+                    // Pobierz status i kolor na podstawie postępu
+                    $taskStatusData = $this->getTaskStatus($newTask->getTaskProgress());
 
-                        // Ustaw status i kolor nowego zadania na podstawie task_progress
-                        $taskProgress = $newTask['task_progress'];
-                        switch ($taskProgress) {
-                            case 0:
-                                $newTask['task_status'] = 'Nowy';
-                                $newTask['task_color'] = 'bg-primary';
-                                break;
-                            case 1:
-                                $newTask['task_status'] = 'Rozpoczęty';
-                                $newTask['task_color'] = 'bg-danger';
-                                break;
-                            case 2:
-                                $newTask['task_status'] = 'W trakcie';
-                                $newTask['task_color'] = 'bg-warning';
-                                break;
-                            case 3:
-                                $newTask['task_status'] = 'Ukończony';
-                                $newTask['task_color'] = 'bg-success';
-                                break;
-                            default:
-                                $newTask['task_status'] = 'Nieznany';
-                                $newTask['task_color'] = 'bg-primary';
-                                break;
-                        }
-
-                        // Ustaw odpowiedź na sukces i przekaż dane nowego zadania
-                        $responseData['success'] = 'Dodano zadanie "' . $title . '"';
-                        $responseData['task'] = $newTask;
-                    } else {
-                        // Ustaw odpowiedź na błąd
-                        $responseData['error'] = 'Nie udało się dodać zadania.';
-                    }
+                    $responseData['task'] = [
+                        'task_id' => $newTask->getTaskId(),
+                        'task_name' => $newTask->getTaskName(),
+                        'task_description' => $newTask->getTaskDescription(),
+                        'task_description_long' => $newTask->getTaskDescriptionLong(),
+                        'task_progress' => $newTask->getTaskProgress(),
+                        'task_status' => $taskStatusData['status'],
+                        'task_color' => $taskStatusData['color'],
+                    ];
                 }
             } else {
-                // Ustaw odpowiedź na błąd
                 $responseData['error'] = 'Nieprawidłowy identyfikator użytkownika.';
             }
         }
 
-        // Zwróć odpowiedź w formie JSON
+        // Zwróć dane w formacie JSON
         echo json_encode($responseData);
     }
 
+    /**
+     * Zwraca status i kolor na podstawie postępu zadania.
+     *
+     * @param int $taskProgress
+     * @return array
+     */
+    private function getTaskStatus(int $taskProgress): array
+    {
+        switch ($taskProgress) {
+            case 0:
+                return ['status' => 'Nowy', 'color' => 'bg-primary'];
+            case 1:
+                return ['status' => 'Rozpoczęty', 'color' => 'bg-danger'];
+            case 2:
+                return ['status' => 'W trakcie', 'color' => 'bg-warning'];
+            case 3:
+                return ['status' => 'Ukończony', 'color' => 'bg-success'];
+            default:
+                return ['status' => 'Nieznany', 'color' => 'bg-primary'];
+        }
+    }
 
     /**
      * Aktualizuje zadanie na podstawie danych przesłanych metodą PUT.
@@ -120,7 +125,7 @@ class TaskController extends BaseController
      */
     public function updateTask(int $taskId): void
     {
-        $userId = $this->getUserId();
+        $userId = $this->auth->getUserId();
         // Sprawdź rolę użytkownika
         if (!$this->checkRole('creator')) {
             echo json_encode(['error' => 'Brak uprawnień do wykonania tej operacji.']);
@@ -143,20 +148,20 @@ class TaskController extends BaseController
             // Ustaw odpowiedź na błąd
             $responseData['error'] = 'Wszystkie pola muszą być wypełnione.';
         } else {
+            $taskRepository = $this->getRepository(Task::class);
             // Sprawdź, czy zadanie o podanym identyfikatorze istnieje
-            $existingTask = $this->taskModel->getTaskById($taskId, $userId);
+            $existingTask = $taskRepository->getTaskById($taskId, $userId);
             if (!$existingTask) {
                 // Zadanie o podanym identyfikatorze nie istnieje
                 $responseData['error'] = 'Zadanie o podanym identyfikatorze nie istnieje.';
             } else {
                 // Aktualizuj zadanie
-                $result = $this->taskModel->setTask($taskId, $title, $description, $descriptionLong);
+                $result = $taskRepository->setTask($taskId, $title, $description, $descriptionLong);
                 if ($result) {
                     // Aktualizacja zadania powiodła się
                     // Pobierz zaktualizowane dane zadania
-                    $updatedTask = $this->taskModel->getTaskById($taskId, $userId);
                     $responseData['success'] = 'Zaktualizowano zadanie "' . $title . '"';
-                    $responseData['task'] = $updatedTask;
+                    $responseData['task'] = $existingTask;
                 } else {
                     // Aktualizacja zadania nie powiodła się
                     $responseData['error'] = 'Nie udało się zaktualizować zadania.';
@@ -176,15 +181,15 @@ class TaskController extends BaseController
      */
     public function singleTask(int $taskId): void
     {
-        $userId = $this->getUserId();
+        $userId = $this->auth->getUserId();
         // Sprawdź rolę użytkownika
         if (!$this->checkRole('creator')) {
             $this->view->render('403_page');
             return;
         }
-
+        $taskRepository = $this->getRepository(Task::class);
         // Pobierz szczegóły zadania na podstawie $taskId z modelu TaskModel
-        $task = $this->taskModel->getTaskById($taskId, $userId);
+        $task = $taskRepository->getTaskById($taskId, $userId);
 
         if (!$task) {
             // Zadanie o podanym identyfikatorze nie istnieje, wyświetl 404
@@ -213,14 +218,14 @@ class TaskController extends BaseController
             echo json_encode(['error' => 'Brak uprawnień do wykonania tej operacji.']);
             return;
         }
-
+        $taskRepository = $this->getRepository(Task::class);
         // Logika zmiany statusu zadania przez pracownika...
 
         $taskId = $_POST['task_id'] ?? null;
         $status = $_POST['task_status'] ?? null;
 
         // Zmiana statusu zadania w modelu TaskModel
-        $this->taskModel->changeTaskStatus($taskId, $status);
+        $taskRepository->changeTaskStatus($taskId, $status);
 
         // Przekierowanie po zmianie statusu zadania
         $this->view->render('user/index');
@@ -234,27 +239,30 @@ class TaskController extends BaseController
      */
     public function deleteTask(int $taskId): void
     {
-        $userId = $this->getUserId();
+        $userId = $this->auth->getUserId();
+
         // Sprawdź rolę użytkownika
         if (!$this->checkRole('creator')) {
             echo json_encode(['success' => false, 'error' => 'Brak uprawnień do usunięcia zadania.']);
             return;
         }
 
+        $taskRepository = $this->getRepository(Task::class);
+
         // Pobierz szczegóły zadania przed jego usunięciem
-        $task = $this->taskModel->getTaskById($taskId, $userId);
+        $task = $taskRepository->getTaskById($taskId, $userId);
 
         if (!$task) {
             echo json_encode(['success' => false, 'error' => 'Zadanie o podanym identyfikatorze nie istnieje.']);
             return;
         }
 
-        // Usuń zadanie z modelu TaskModel
-        $result = $this->taskModel->deleteTask($taskId);
+        // Usuń zadanie
+        $result = $taskRepository->deleteTask($taskId, $userId);
 
         // Jeśli zadanie zostało usunięte poprawnie, zwróć odpowiednią odpowiedź (np. JSON)
         if ($result) {
-            echo json_encode(['success' => true, 'message' => 'Zadanie "' . $task['task_name'] . '" zostało usunięte']);
+            echo json_encode(['success' => true, 'message' => 'Zadanie "' . $task->getTaskName() . '" zostało usunięte.']);
         } else {
             echo json_encode(['success' => false, 'error' => 'Wystąpił błąd podczas usuwania zadania.']);
         }

@@ -23,7 +23,7 @@
             </div>
         </header>
         <div class="row">
-            <div v-for="project in userProjects" :key="project.project_id" class="col-md-4 px-4">
+            <div v-for="project in userProjects" :key="project.project_id" class="col-md-4 px-4 pb-4">
                 <div class="card shadow-lg">
                     <div class="card-header p-3 d-flex justify-content-between align-items-center">
                         <div>
@@ -31,11 +31,11 @@
                         </div>
                         <div>
                             <!-- Przycisk do edycji projektu -->
-                            <button type="button" class="btn btn-primary btn-sm" @click="openEditProjectModal(project)">
+                            <button type="button" class="btn btn-primary btn-sm mx-1" @click="openEditProjectModal(project)">
                                 <i class="bi bi-pencil"></i>
                             </button>
                             <!-- Przycisk "x" do usuwania -->
-                            <button type="button" class="btn btn-danger btn-sm" @click="openDeleteModal(project.project_id)">
+                            <button type="button" class="btn btn-danger btn-sm mx-1" @click="openDeleteModal(project.project_id)">
                                 <i class="bi bi-x"></i>
                             </button>
                         </div>
