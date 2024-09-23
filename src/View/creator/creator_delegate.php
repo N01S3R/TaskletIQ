@@ -1,9 +1,9 @@
 <?php App\Helpers\Template::partials('header_creator'); ?>
-<?php
-echo '<pre>';
-var_dump($data);
-echo '</pre>';
-?>
+<!-- <?php
+        echo '<pre>';
+        var_dump($data);
+        echo '</pre>';
+        ?> -->
 <div id="app">
     <div v-if="loading" class="loader">
         TaskletIQ
@@ -21,7 +21,6 @@ echo '</pre>';
                 <button type="button" class="btn btn-secondary me-2" data-bs-toggle="tooltip" data-bs-placement="bottom" data-bs-html="true" title="<strong>Jak przypisać użytkownika do zadania:</strong><ul class='text-start list-group list-group-numbered'><li class='list-group-item'>Zaznacz zadanie.</li><li class='list-group-item'>Zaznacz użytkownika.</li><li class='list-group-item'>Kliknij <em>+ Przypisz</em>.</li></ul>">
                     Pomoc
                 </button>
-
                 <a href="/creator/dashboard" class="btn btn-primary">
                     <i class="bi bi-arrow-left"></i> Pulpit
                 </a>
@@ -35,15 +34,15 @@ echo '</pre>';
                     </div>
                     <div class="card-body" ref="projectList" style="position: relative;">
                         <div class="custom-row-delegate">
-                            <div v-for="(project, projectIndex) in userProjects" :key="'project-' + projectIndex">
+                            <div v-for="project in userProjects" :key="project.project_id">
                                 <div class="col-12 col-xl-4">
                                     <div class="card bg-success text-white">
                                         <div class="card-body">
-                                            <h5 class="card-title">{{ projectIndex + 1 }} Projekt: {{ project.project_name }}</h5>
+                                            <h5 class="card-title">{{ project.project_name }}</h5>
                                         </div>
                                     </div>
                                 </div>
-                                <div v-for="(task, taskIndex) in project.tasks" :key="'task-' + taskIndex">
+                                <div v-for="task in project.tasks" :key="task.task_id">
                                     <div class="row my-2 mx-1">
                                         <div class="col-sm-12 col-md-4 col-lg-9 col-xl-4 my-2">
                                             <div class="card border-warning" @click="selectTask(task.task_id)" :class="{ 'selected': selectedTaskId === task.task_id }" style="cursor: pointer;">
@@ -57,8 +56,8 @@ echo '</pre>';
                                             <div class="card border-danger">
                                                 <div class="card-body">
                                                     <div class="row">
-                                                        <div class="col-4" v-for="(column, columnIndex) in Math.ceil(task.users.length / 4)" :key="'column-' + columnIndex">
-                                                            <div v-for="(user, userIndex) in task.users.slice(columnIndex * 4, (columnIndex + 1) * 4)" :key="'user-' + userIndex">
+                                                        <div class="col-4" v-for="(column, columnIndex) in Math.ceil(task.users.length / 4)" :key="columnIndex">
+                                                            <div v-for="user in task.users.slice(columnIndex * 4, (columnIndex + 1) * 4)" :key="user.user_id">
                                                                 <div class="d-flex align-items-center highlight-on-hover justify-content-center py-2" :data-id="user.user_id" @click="confirmAndUnassign(user.user_id, task.task_id)" style="cursor: pointer;">
                                                                     <img :src="'/images/' + user.user_avatar" class="avatar-img" alt="User Avatar" style="height: 30px; width: 30px; margin-right: 5px;">
                                                                     <span>{{ user.user_login }}</span>
@@ -86,7 +85,7 @@ echo '</pre>';
                     </div>
                     <div class="card-body" ref="userList" style="position: relative;">
                         <div class="custom-row-delegate-right">
-                            <div v-for="(user, userIndex) in users" :key="'user-' + userIndex" class="card m-lg-2 border-warning" @click="selectUser(user.user_id)" :class="{ 'selected': selectedUserId === user.user_id }" style="cursor: pointer;">
+                            <div v-for="user in users" :key="user.user_id" class="card m-lg-2 border-warning" @click="selectUser(user.user_id)" :class="{ 'selected': selectedUserId === user.user_id }" style="cursor: pointer;">
                                 <div class="card-body d-flex align-items-center">
                                     <img :src="'/images/' + user.user_avatar" class="card-img-top" alt="User Avatar" style="height: 10%; width: 10%; margin-right: 10px;">
                                     <div>
@@ -138,7 +137,7 @@ echo '</pre>';
             <button type="button" class="btn-close" @click="closeOffcanvas" aria-label="Close"></button>
         </div>
         <div class="offcanvas-body">
-            <div v-for="(user, userIndex) in users" :key="'offcanvas-user-' + userIndex" class="card m-lg-2" @click="selectUser(user.user_id)" :class="{ 'selected': selectedUserId === user.user_id }" style="cursor: pointer;">
+            <div v-for="user in users" :key="'offcanvas-user-' + user.user_id" class="card m-lg-2" @click="selectUser(user.user_id)" :class="{ 'selected': selectedUserId === user.user_id }" style="cursor: pointer;">
                 <div class="card-body d-flex align-items-center">
                     <img :src="'/images/' + user.user_avatar" class="card-img-top" alt="User Avatar" style="height: 10%; width: 10%; margin-right: 10px;">
                     <div>
@@ -187,6 +186,7 @@ echo '</pre>';
                 },
                 selectUser(userId) {
                     this.selectedUserId = (this.selectedUserId === userId) ? null : userId;
+                    console.log(this.selectedUserId);
                 },
                 selectTask(taskId) {
                     if (taskId === 0) {
@@ -226,9 +226,9 @@ echo '</pre>';
                         .then(response => {
                             if (response.data && response.data.success) {
                                 const newUser = response.data.user;
-                                newUser.user_name = newUser.username;
                                 this.userProjects.forEach(project => {
-                                    project.tasks.forEach(task => {
+                                    const tasksArray = Object.values(project.tasks);
+                                    tasksArray.forEach(task => {
                                         if (task.task_id === this.selectedTaskId) {
                                             task.users.push(newUser);
                                         }
@@ -242,7 +242,6 @@ echo '</pre>';
                             }
                         })
                         .catch(error => {
-                            console.error('Wystąpił błąd podczas przypisywania użytkownika:', error);
                             this.showNotification('error', 'Wystąpił błąd podczas przypisywania użytkownika.');
                         });
                 },
@@ -277,8 +276,12 @@ echo '</pre>';
                                 this.clearAssign();
                                 this.showNotification('info', data.success);
                                 this.userProjects.forEach(project => {
-                                    project.tasks.forEach(task => {
+                                    const tasksArray = Object.values(project.tasks);
+                                    tasksArray.forEach(task => {
                                         if (task.task_id === taskId) {
+                                            if (!Array.isArray(task.users)) {
+                                                task.users = [];
+                                            }
                                             task.users = task.users.filter(user => user.user_id !== userId);
                                         }
                                     });
@@ -341,7 +344,7 @@ echo '</pre>';
             mounted() {
                 setTimeout(() => {
                     this.loading = false;
-                    this.initializeScrollbars(); // Initialize scrollbars after component is mounted
+                    this.initializeScrollbars();
                 }, 1000);
             }
         }).mount('#app');

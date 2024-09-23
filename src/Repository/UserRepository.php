@@ -192,18 +192,40 @@ class UserRepository extends EntityRepository
     }
 
     /**
-     * Znajduje użytkowników z tym samym tokenem rejestracyjnym.
+     * Znajduje użytkowników z tym samym tokenem rejestracyjnym, oprócz aktualnie zalogowanego użytkownika.
      *
      * @param string $registrationToken
+     * @param int $loggedInUserId
      * @return array
      */
-    public function findUsersByRegistrationToken(string $registrationToken): array
+    public function findUsersByRegistrationToken(string $registrationToken, int $loggedInUserId): array
     {
         $qb = $this->createQueryBuilder('u')
-            ->select('u.userId, u.username, u.email') // Wybierz tylko potrzebne pola
+            ->select('u.userId AS user_id, u.login AS user_login, u.avatar AS user_avatar') // Użyj aliasów
             ->where('u.registrationToken = :registrationToken')
-            ->setParameter('registrationToken', $registrationToken);
+            ->andWhere('u.userId != :loggedInUserId')
+            ->setParameter('registrationToken', $registrationToken)
+            ->setParameter('loggedInUserId', $loggedInUserId);
 
-        return $qb->getQuery()->getArrayResult(); // Zwróć wynik jako tablicę
+        $result = $qb->getQuery()->getArrayResult();
+
+        return $result;
+    }
+
+    /**
+     * Zlicza tokeny przypisane do użytkownika.
+     *
+     * @param int $userId
+     * @return int
+     */
+    public function getTokenCountByUserId(int $userId): int
+    {
+        return $this->createQueryBuilder('u')
+            ->select('COUNT(t.id)')
+            ->join('u.tokens', 't') // Zakładając, że masz relację do tokenów w encji User
+            ->where('u.userId = :userId')
+            ->setParameter('userId', $userId)
+            ->getQuery()
+            ->getSingleScalarResult();
     }
 }

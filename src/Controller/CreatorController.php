@@ -5,6 +5,7 @@ namespace App\Controller;
 use App\Entity\Task;
 use App\Entity\User;
 use App\Entity\Project;
+use App\Entity\TaskUser;
 
 /**
  * Kontroler do zarządzania zadaniami twórcy.
@@ -24,7 +25,7 @@ class CreatorController extends BaseController
             // Przygotowanie danych dla pulpit twórcy
             $data = [
                 'pageTitle' => 'Pulpit',
-                'tasksCount' => count($taskRepository->getTasksByUserIdWithProjects($userId)),
+                'tasksCount' => count($taskRepository->getAllTasksByUserId($userId)),
                 'tasksStart' => $taskRepository->getTasksByProgress($userId, 1),
                 'tasksInProgress' => $taskRepository->getTasksByProgress($userId, 2),
                 'tasksDone' => $taskRepository->getTasksByProgress($userId, 3),
@@ -81,26 +82,34 @@ class CreatorController extends BaseController
      */
     public function displayDelegateForm(): void
     {
+        // Sprawdzamy, czy użytkownik jest zalogowany
         if ($this->auth->getUserId()) {
+            // Pobieramy repozytorium użytkowników i projektów
             $userRepository = $this->getRepository(User::class);
             $projectRepository = $this->getRepository(Project::class);
             $loggedInUserId = $this->auth->getUserId();
 
-            // Pobierz token rejestracyjny zalogowanego użytkownika
+            // Pobieramy zalogowanego użytkownika na podstawie ID
             $loggedInUser = $userRepository->find($loggedInUserId);
             $registrationToken = $loggedInUser ? $loggedInUser->getRegistrationToken() : null;
 
-            // Pobierz projekty i użytkowników z tym samym tokenem rejestracyjnym
-            $projects = $projectRepository->getProjectsWithTasksByUserId($loggedInUserId);
-            $users = $registrationToken ? $userRepository->findUsersByRegistrationToken($registrationToken) : [];
+            // Pobieramy projekty użytkownika wraz z zadaniami i przypisanymi użytkownikami
+            $projects = $projectRepository->getProjectWithTasksAndUsers($loggedInUserId);
 
+            // Pobieramy wszystkich użytkowników z tym samym tokenem rejestracyjnym
+            $users = $registrationToken ? $userRepository->findUsersByRegistrationToken($registrationToken, $loggedInUserId) : [];
+
+            // Przygotowujemy dane do widoku
             $data = [
                 'pageTitle' => 'Przypisz użytkownika',
                 'userProjects' => $projects,
                 'users' => $users,
             ];
+
+            // Renderujemy widok
             $this->render('creator/creator_delegate', $data);
         } else {
+            // Przekierowanie na stronę logowania, jeśli użytkownik nie jest zalogowany
             header('Location: /login');
             exit();
         }
@@ -118,46 +127,49 @@ class CreatorController extends BaseController
             echo json_encode($responseData);
             return;
         }
+
         $taskRepository = $this->getRepository(Task::class);
+        $userRepository = $this->getRepository(User::class);
+        $taskUserRepository = $this->getRepository(TaskUser::class);
         $requestData = json_decode(file_get_contents('php://input'), true);
         $taskId = $requestData['taskId'] ?? null;
         $userId = $requestData['userId'] ?? null;
 
-        $task = $this->taskRepository->find($taskId);
+        $task = $taskRepository->find($taskId);
         if (!$task) {
             $responseData['error'] = 'Zadanie nie znalezione.';
             echo json_encode($responseData);
             return;
         }
 
-        $user = $this->userRepository->find($userId);
+        $user = $userRepository->find($userId);
         if (!$user) {
             $responseData['error'] = "Użytkownik o ID '{$userId}' nie znaleziony.";
             echo json_encode($responseData);
             return;
         }
 
-        $isUserAssigned = $this->taskRepository->isUserAssignedToTask($taskId, $userId);
+        $isUserAssigned = $taskUserRepository->isUserAssignedToTask($taskId, $userId);
         if ($isUserAssigned) {
-            $responseData['error'] = "Użytkownik '{$user->getLogin()}' jest już przypisany do zadania " . $task->getName();
+            $responseData['error'] = "Użytkownik '{$user->getUsername()}' jest już przypisany do zadania " . $task->getTaskName();
             echo json_encode($responseData);
             return;
         }
 
-        $assignedUsersCount = $this->taskRepository->getAssignedUsersCount($taskId);
+        $assignedUsersCount = $taskUserRepository->getAssignedUsersCount($taskId);
         if ($assignedUsersCount >= 12) {
             $responseData['error'] = "Osiągnięto maksymalną liczbę przypisanych użytkowników do tego zadania.";
             echo json_encode($responseData);
             return;
         }
 
-        $this->taskRepository->assignTaskToUser($taskId, $userId);
+        $taskUserRepository->assignTaskToUser($taskId, $userId);
 
-        $responseData['success'] = 'Użytkownik "' . $user->getLogin() . '" został przypisany do zadania "' . $task->getName() . '"';
+        $responseData['success'] = 'Użytkownik "' . $user->getUsername() . '" został przypisany do zadania "' . $task->getTaskName() . '"';
         $responseData['user'] = [
-            'user_id' => $user->getId(),
+            'user_id' => $user->getUserId(),
             'user_login' => $user->getLogin(),
-            'user_avatar' => $user->getAvatar()
+            'user_avatar' => $user->getAvatar(),
         ];
         echo json_encode($responseData);
     }
@@ -169,15 +181,18 @@ class CreatorController extends BaseController
     public function unassignUserFromTask(): void
     {
         $responseData = [];
-        if (!$this->checkRole('creator')) {
+        if (!$this->auth->getUserId()) {
             $responseData['error'] = 'Brak odpowiednich uprawnień do wykonania tej operacji.';
             echo json_encode($responseData);
             return;
         }
+
         $taskRepository = $this->getRepository(Task::class);
-        $data = json_decode(file_get_contents('php://input'), true);
-        $taskId = $data['taskId'] ?? null;
-        $userId = $data['userId'] ?? null;
+        $userRepository = $this->getRepository(User::class);
+        $taskUserRepository = $this->getRepository(TaskUser::class);
+        $requestData = json_decode(file_get_contents('php://input'), true);
+        $taskId = $requestData['taskId'] ?? null;
+        $userId = $requestData['userId'] ?? null;
 
         $task = $taskRepository->find($taskId);
         if (!$task) {
@@ -186,16 +201,28 @@ class CreatorController extends BaseController
             return;
         }
 
-        $user = $taskRepository->find($userId);
+        $user = $userRepository->find($userId);
         if (!$user) {
             $responseData['error'] = "Użytkownik o ID '{$userId}' nie znaleziony.";
             echo json_encode($responseData);
             return;
         }
 
-        $this->taskRepository->removeUserAssignmentToTask($taskId, $userId);
+        $isUserAssigned = $taskUserRepository->isUserAssignedToTask($taskId, $userId);
+        if (!$isUserAssigned) {
+            $responseData['error'] = "Użytkownik '{$user->getUsername()}' nie jest przypisany do zadania " . $task->getTaskName();
+            echo json_encode($responseData);
+            return;
+        }
 
-        $responseData['success'] = 'Przypisanie "' . $task->getName() . '" do "' . $user->getLogin() . '" zostało usunięte';
+        $taskUserRepository->removeUserAssignmentToTask($taskId, $userId);
+
+        $responseData['success'] = 'Przypisanie "' . $task->getTaskName() . '" do "' . $user->getUsername() . '" zostało usunięte';
+        $responseData['user'] = [
+            'user_id' => $user->getUserId(),
+            'user_login' => $user->getLogin(),
+            'user_avatar' => $user->getAvatar(),
+        ];
         echo json_encode($responseData);
     }
 
@@ -240,7 +267,7 @@ class CreatorController extends BaseController
         }
 
         $userId = $this->auth->getUserId();
-        $tokenCount = $userRepository->getTokenCountByUserId($userId);
+        $tokenCount = $this->getTokenCountByUserId($userId);
 
         if ($tokenCount >= 10) {
             $response = [
@@ -252,7 +279,7 @@ class CreatorController extends BaseController
         }
 
         $newToken = md5($token . microtime());
-        $userRepository->setToken($userId, $newToken);
+        $this->setToken($userId, $newToken);
 
         $response = [
             'success' => true,

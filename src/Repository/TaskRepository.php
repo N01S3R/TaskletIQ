@@ -10,28 +10,36 @@ use Doctrine\ORM\EntityRepository;
 class TaskRepository extends EntityRepository
 {
     /**
-     * Zwraca wszystkie zadania.
+     * Zwraca wszystkie zadania przypisane do zalogowanego użytkownika.
      *
-     * @return Task[]
+     * @param int $userId Identyfikator zalogowanego użytkownika.
+     * @return Task[] Tablica z zadaniami użytkownika.
      */
-    public function getAllTasks(): array
+    public function getAllTasksByUserId(int $userId): array
     {
-        return $this->findAll();
+        return $this->createQueryBuilder('t')
+            ->join('t.users', 'u')
+            ->where('u.userId = :userId')
+            ->setParameter('userId', $userId)
+            ->getQuery()
+            ->getResult();
     }
 
     /**
-     * Znajduje zadanie po ID.
+     * Znajduje zadanie po ID oraz użytkowniku.
      *
      * @param int $taskId
+     * @param int $userId
      * @return Task|null
      */
     public function getTaskById(int $taskId, int $userId)
     {
         return $this->createQueryBuilder('t')
             ->where('t.taskId = :taskId')
-            ->andWhere('t.user = :user')
+            ->innerJoin('t.users', 'u')
+            ->andWhere('u.userId = :userId')
             ->setParameter('taskId', $taskId)
-            ->setParameter('user', $userId)
+            ->setParameter('userId', $userId)
             ->getQuery()
             ->getOneOrNullResult();
     }
@@ -61,42 +69,40 @@ class TaskRepository extends EntityRepository
     }
 
     /**
-     * Zwraca zadania przypisane do użytkownika wraz z informacjami o projektach.
+     * Zwraca zadania przypisane do użytkownika wraz z informacjami o powiązanych projektach.
      *
-     * @param int $userId
-     * @return array
+     * @param int $userId Identyfikator użytkownika, dla którego mają być zwrócone zadania.
+     * @return array Tablica z zadaniami przypisanymi do użytkownika, zawierająca informacje o projektach.
      */
     public function getTasksByUserIdWithProjects(int $userId): array
     {
-        // Tworzymy zapytanie do pobrania zadań oraz powiązanych projektów
-        $qb = $this->createQueryBuilder('t')
-            ->innerJoin('t.project', 'p')
-            ->innerJoin('p.user', 'u')
+        return $this->createQueryBuilder('t')
+            ->leftJoin('t.users', 'u')
+            ->leftJoin('t.project', 'p')
             ->where('u.userId = :userId')
             ->setParameter('userId', $userId)
             ->addSelect('p')
-            ->getQuery();
-
-        return $qb->getArrayResult();
+            ->getQuery()
+            ->getArrayResult();
     }
 
     /**
-     * Zlicza zadania o określonym poziomie postępu dla danego użytkownika.
+     * Zwraca zadania o określonym poziomie postępu dla danego użytkownika.
      *
      * @param int $userId
      * @param int $progress
-     * @return int
+     * @return array
      */
-    public function getTasksByProgress(int $userId, int $progress): int
+    public function getTasksByProgress(int $userId, int $progress): array
     {
         return $this->createQueryBuilder('t')
-            ->select('COUNT(t.taskId)')
-            ->where('t.user = :userId')
-            ->andWhere('t.taskProgress = :progress')
-            ->setParameter('userId', $userId)
+            ->innerJoin('t.users', 'u')
+            ->where('t.taskProgress = :progress')
+            ->andWhere('u.userId = :userId')
             ->setParameter('progress', $progress)
+            ->setParameter('userId', $userId)
             ->getQuery()
-            ->getSingleScalarResult();
+            ->getArrayResult();
     }
 
     /**
@@ -108,7 +114,6 @@ class TaskRepository extends EntityRepository
      */
     public function getGroupedTasksByProgress(int $userId, int $progressId): array
     {
-        // Tworzymy zapytanie do pobrania zadań i powiązanych projektów
         $qb = $this->createQueryBuilder('t')
             ->innerJoin('t.project', 'p')
             ->where('t.user = :userId')
@@ -152,7 +157,8 @@ class TaskRepository extends EntityRepository
         $query = $this->createQueryBuilder('t')
             ->select('COUNT(t.taskId)')
             ->where('t.taskName = :title')
-            ->andWhere('t.user = :userId')
+            ->innerJoin('t.users', 'u')
+            ->andWhere('u.userId = :userId')
             ->setParameter('title', $title)
             ->setParameter('userId', $userId)
             ->getQuery();
@@ -175,18 +181,17 @@ class TaskRepository extends EntityRepository
         $task = new Task();
         $task->setTaskName($title);
         $task->setTaskDescription($description);
-        $task->setTaskDescriptionLong($descriptionLong);
+        $task->setTaskDescriptionLong($descriptionLong ?? '');
         $task->setTaskProgress(0);
         $task->setTaskStatus("Nowy");
         $task->setProject($this->getEntityManager()->getRepository(Project::class)->find($projectId));
         $task->setUser($this->getEntityManager()->getRepository(User::class)->find($userId));
         $task->setTaskCreatedAt(new \DateTime());
 
-        // Persist and flush
         $this->_em->persist($task);
         $this->_em->flush();
 
-        return $task; // Zwróć nowo utworzone zadanie
+        return $task;
     }
 
     /**
@@ -200,19 +205,19 @@ class TaskRepository extends EntityRepository
      */
     public function setTask(int $taskId, ?string $title, ?string $description, string $descriptionLong): bool
     {
-        // Znajdź zadanie po identyfikatorze
         $task = $this->find($taskId);
 
         if (!$task) {
             return false;
         }
 
-        // Aktualizuj właściwości zadania
         $task->setTaskName($title);
         $task->setTaskDescription($description);
         $task->setTaskDescriptionLong($descriptionLong);
 
-        // Zwróć true, gdy aktualizacja się powiodła
+        // Zapisanie zmian
+        $this->_em->flush();
+
         return true;
     }
 
@@ -225,17 +230,15 @@ class TaskRepository extends EntityRepository
      */
     public function deleteTask(int $taskId, int $userId): bool
     {
-        // Znajdź zadanie po identyfikatorze
         $task = $this->getTaskById($taskId, $userId);
 
         if (!$task) {
-            return false; // Zadanie nie zostało znalezione
+            return false;
         }
 
-        // Usuń zadanie
         $this->_em->remove($task);
         $this->_em->flush();
 
-        return true; // Usunięcie powiodło się
+        return true;
     }
 }

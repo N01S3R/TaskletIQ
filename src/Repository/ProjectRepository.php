@@ -2,8 +2,9 @@
 
 namespace App\Repository;
 
-use Doctrine\ORM\EntityRepository;
+use App\Entity\User;
 use App\Entity\Project;
+use Doctrine\ORM\EntityRepository;
 
 class ProjectRepository extends EntityRepository
 {
@@ -33,22 +34,6 @@ class ProjectRepository extends EntityRepository
             ->setParameter('userId', $userId)
             ->getQuery()
             ->getOneOrNullResult();
-    }
-
-    /**
-     * Zwraca projekty powiązane z użytkownikiem o danym ID.
-     *
-     * @param int $userId
-     * @return Project[]
-     */
-    public function getProjectsByUserId(int $userId): array
-    {
-        return $this->createQueryBuilder('p')
-            ->join('p.user', 'u')
-            ->where('u.userId = :userId')
-            ->setParameter('userId', $userId)
-            ->getQuery()
-            ->getResult();
     }
 
     /**
@@ -109,38 +94,61 @@ class ProjectRepository extends EntityRepository
     }
 
     /**
-     * Pobiera projekty przypisane do danego użytkownika wraz z zadaniami w uproszczonej formie.
+     * Pobiera projekty, zadania oraz użytkowników przypisanych do zadań dla danego użytkownika.
      *
-     * @param int $userId Identyfikator użytkownika, którego projekty mają zostać pobrane.
-     * @return array Tablica projektów z przypisanymi zadaniami jako tablice.
+     * @param int $userId Identyfikator użytkownika, dla którego mają być pobrane projekty i zadania.
+     * @return array Zwraca tablicę projektów, zadań oraz użytkowników.
      */
-    public function getProjectsWithTasksByUserId(int $userId): array
+    public function getProjectWithTasksAndUsers(int $userId): array
     {
-        $projects = $this->createQueryBuilder('p')
+        $qb = $this->createQueryBuilder('p')
+            ->select('p.projectId AS project_id, p.projectName AS project_name, 
+              t.taskId AS task_id, t.taskName AS task_name, 
+              t.taskDescription AS task_description, t.taskCreatedAt AS task_created_at,
+              u.userId AS user_id, u.login AS user_login, u.email AS user_email, u.avatar AS user_avatar')
             ->leftJoin('p.tasks', 't')
-            ->join('p.user', 'u')
-            ->where('u.userId = :userId')
-            ->setParameter('userId', $userId)
-            ->addSelect('t')
-            ->getQuery()
-            ->getResult();
+            ->leftJoin('t.users', 'u')
+            ->where('p.user = :userId')
+            ->setParameter('userId', $userId);
 
-        $cleanProjects = [];
-        foreach ($projects as $project) {
-            $cleanProjects[] = [
-                'project_id' => $project->getProjectId(),
-                'project_name' => $project->getProjectName(),
-                'tasks' => array_map(function ($task) {
-                    return [
-                        'task_id' => $task->getTaskId(),
-                        'task_name' => $task->getTaskName(),
-                        'task_progress' => $task->getTaskProgress(),
-                        'task_description' => $task->getTaskDescription(),
+        $result = $qb->getQuery()->getArrayResult();
+
+        // Grupowanie projektów według identyfikatora projektu
+        $groupedProjects = [];
+        foreach ($result as $row) {
+            $projectId = $row['project_id'];
+            if (!isset($groupedProjects[$projectId])) {
+                $groupedProjects[$projectId] = [
+                    'project_id' => $row['project_id'],
+                    'project_name' => $row['project_name'],
+                    'tasks' => [],
+                ];
+            }
+
+            if ($row['task_id'] !== null) {
+                $taskId = (int) $row['task_id'];
+                if (!isset($groupedProjects[$projectId]['tasks'][$taskId])) {
+                    $groupedProjects[$projectId]['tasks'][$taskId] = [
+                        'task_id' => $taskId,
+                        'task_name' => $row['task_name'],
+                        'task_description' => $row['task_description'],
+                        'created_at' => $row['task_created_at'],
+                        'users' => [],
                     ];
-                }, $project->getTasks()->toArray() ?: []),
-            ];
+                }
+
+                // Dodaj użytkowników do zadania
+                if ($row['user_id']) {
+                    $groupedProjects[$projectId]['tasks'][$taskId]['users'][] = [
+                        'user_id' => $row['user_id'],
+                        'user_login' => $row['user_login'],
+                        'user_avatar' => $row['user_avatar'],
+                    ];
+                }
+            }
         }
 
-        return $cleanProjects;
+        // Zamień indeksy na numery i zwróć wynik
+        return array_values($groupedProjects);
     }
 }

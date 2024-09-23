@@ -3,6 +3,8 @@
 namespace App\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
+use Doctrine\Common\Collections\Collection;
+use Doctrine\Common\Collections\ArrayCollection;
 
 /**
  * @ORM\Entity(repositoryClass="App\Repository\TaskRepository")
@@ -54,10 +56,18 @@ class Task
     private $project;
 
     /**
-     * @ORM\ManyToOne(targetEntity="User", inversedBy="projects")
-     * @ORM\JoinColumn(name="user_id", referencedColumnName="user_id")
+     * @ORM\ManyToMany(targetEntity="User", inversedBy="tasks")
+     * @ORM\JoinTable(name="tasks_users",
+     *      joinColumns={@ORM\JoinColumn(name="task_id", referencedColumnName="task_id")},
+     *      inverseJoinColumns={@ORM\JoinColumn(name="user_id", referencedColumnName="user_id")}
+     * )
      */
-    private $user;
+    private $users;
+
+    public function __construct()
+    {
+        $this->users = new ArrayCollection();
+    }
 
     // Getters and Setters
 
@@ -74,7 +84,6 @@ class Task
     public function setTaskName(?string $taskName): self
     {
         $this->taskName = $taskName;
-
         return $this;
     }
 
@@ -86,7 +95,6 @@ class Task
     public function setTaskDescription(?string $taskDescription): self
     {
         $this->taskDescription = $taskDescription;
-
         return $this;
     }
 
@@ -98,7 +106,6 @@ class Task
     public function setTaskDescriptionLong(string $taskDescriptionLong): self
     {
         $this->taskDescriptionLong = $taskDescriptionLong;
-
         return $this;
     }
 
@@ -110,7 +117,6 @@ class Task
     public function setTaskCreatedAt(?\DateTimeInterface $taskCreatedAt): self
     {
         $this->taskCreatedAt = $taskCreatedAt;
-
         return $this;
     }
 
@@ -122,7 +128,6 @@ class Task
     public function setTaskProgress(int $taskProgress): self
     {
         $this->taskProgress = $taskProgress;
-
         return $this;
     }
 
@@ -134,7 +139,6 @@ class Task
     public function setTaskStatus(string $taskStatus): self
     {
         $this->taskStatus = $taskStatus;
-
         return $this;
     }
 
@@ -146,19 +150,34 @@ class Task
     public function setProject(?Project $project): self
     {
         $this->project = $project;
-
         return $this;
     }
 
-    public function getUser(): ?User
+    public function getUsers(): Collection
     {
-        return $this->user;
+        return $this->users;
     }
 
-    public function setUser(?User $user): self
+    public function addUser(User $user): self
     {
-        $this->user = $user;
+        if (!$this->users->contains($user)) {
+            $this->users[] = $user;
+            $user->addTask($this);
+        }
+        return $this;
+    }
 
+    public function removeUser(User $user): self
+    {
+        if ($this->users->removeElement($user)) {
+            $user->removeTask($this);
+        }
+        return $this;
+    }
+
+    public function setUser(User $user): self
+    {
+        $this->addUser($user);
         return $this;
     }
 }

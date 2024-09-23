@@ -2,9 +2,9 @@
 
 namespace App\Entity;
 
-use Doctrine\Common\Collections\ArrayCollection;
-use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
+use Doctrine\Common\Collections\Collection;
+use Doctrine\Common\Collections\ArrayCollection;
 
 /**
  * @ORM\Entity(repositoryClass="App\Repository\UserRepository")
@@ -20,9 +20,9 @@ class User
     private $userId;
 
     /**
-     * @ORM\Column(type="string", length=255, name="user_login")
+     * @ORM\Column(type="string", length=100, name="user_login")
      */
-    private $username;
+    private $login;
 
     /**
      * @ORM\Column(type="string", length=255, name="user_password")
@@ -30,14 +30,34 @@ class User
     private $password;
 
     /**
-     * @ORM\Column(type="string", length=255, name="user_name", nullable=true)
+     * @ORM\Column(type="string", length=100, name="user_name")
      */
-    private $name;
+    private $username;
 
     /**
-     * @ORM\Column(type="string", length=255, name="user_email")
+     * @ORM\Column(type="string", length=100, name="user_email")
      */
     private $email;
+
+    /**
+     * @ORM\Column(type="string", length=255, nullable=true, name="registration_token")
+     */
+    private $registrationToken;
+
+    /**
+     * @ORM\Column(type="string", length=255, nullable=true, name="user_avatar")
+     */
+    private $avatar;
+
+    /**
+     * @ORM\Column(type="datetime", nullable=true, name="registration_date")
+     */
+    private $registrationDate;
+
+    /**
+     * @ORM\Column(type="boolean", options={"default": false}, name="user_logged")
+     */
+    private $logged;
 
     /**
      * @ORM\Column(type="string", length=50, name="user_role")
@@ -45,56 +65,42 @@ class User
     private $role;
 
     /**
-     * @ORM\Column(type="boolean", name="user_logged", options={"default": false})
+     * @ORM\ManyToMany(targetEntity="Task", mappedBy="user")
      */
-    private $loggedIn;
+    private $tasks;
 
     /**
-     * @ORM\Column(type="datetime", name="registration_date")
+     * @ORM\OneToMany(targetEntity="TaskUser", mappedBy="user")
      */
-    private $registrationDate;
-
-    /**
-     * @ORM\Column(type="string", length=255, name="user_avatar", nullable=true)
-     */
-    private $avatar;
+    private $taskUsers;
 
     /**
      * @ORM\OneToMany(targetEntity="Project", mappedBy="user")
      */
     private $projects;
 
-    /**
-     * @ORM\OneToMany(targetEntity="Task", mappedBy="user")
-     */
-    private $tasks;
-
-    /**
-     * @ORM\Column(type="string", length=255, name="registration_token", nullable=true)
-     */
-    private $registrationToken;
-
     public function __construct()
     {
-        $this->projects = new ArrayCollection();
         $this->tasks = new ArrayCollection();
+        $this->taskUsers = new ArrayCollection();
+        $this->projects = new ArrayCollection();
     }
 
-    // Gettery i settery
+    // Getters and Setters
 
     public function getUserId(): ?int
     {
         return $this->userId;
     }
 
-    public function getUsername(): ?string
+    public function getLogin(): ?string
     {
-        return $this->username;
+        return $this->login;
     }
 
-    public function setUsername(string $username): self
+    public function setLogin(string $login): self
     {
-        $this->username = $username;
+        $this->login = $login;
         return $this;
     }
 
@@ -109,14 +115,14 @@ class User
         return $this;
     }
 
-    public function getName(): ?string
+    public function getUsername(): ?string
     {
-        return $this->name;
+        return $this->username;
     }
 
-    public function setName(?string $name): self
+    public function setUsername(string $username): self
     {
-        $this->name = $name;
+        $this->username = $username;
         return $this;
     }
 
@@ -131,41 +137,14 @@ class User
         return $this;
     }
 
-    public function hasRole(string $role): bool
+    public function getRegistrationToken(): ?string
     {
-        return $this->role === $role;
+        return $this->registrationToken;
     }
 
-    public function getRole(): ?string
+    public function setRegistrationToken(?string $registrationToken): self
     {
-        return $this->role;
-    }
-
-    public function setRole(string $role): self
-    {
-        $this->role = $role;
-        return $this;
-    }
-
-    public function isLoggedIn(): ?bool
-    {
-        return $this->loggedIn;
-    }
-
-    public function setLoggedIn(bool $status): self
-    {
-        $this->loggedIn = $status;
-        return $this;
-    }
-
-    public function getRegistrationDate(): ?\DateTime
-    {
-        return $this->registrationDate;
-    }
-
-    public function setRegistrationDate(\DateTime $registrationDate): self
-    {
-        $this->registrationDate = $registrationDate;
+        $this->registrationToken = $registrationToken;
         return $this;
     }
 
@@ -180,45 +159,106 @@ class User
         return $this;
     }
 
-    /**
-     * Zwraca kolekcję projektów przypisanych do użytkownika.
-     *
-     * @return Collection|Project[]
-     */
-    public function getProjects(): Collection
+    public function getRegistrationDate(): ?\DateTimeInterface
     {
-        return $this->projects;
+        return $this->registrationDate;
     }
 
-    /**
-     * Zwraca kolekcję zadań przypisanych do użytkownika.
-     *
-     * @return Collection|Task[]
-     */
+    public function setRegistrationDate(?\DateTimeInterface $registrationDate): self
+    {
+        $this->registrationDate = $registrationDate;
+        return $this;
+    }
+
+    public function isLogged(): ?bool
+    {
+        return $this->logged;
+    }
+
+    public function setLoggedIn(bool $logged): self
+    {
+        $this->logged = $logged;
+        return $this;
+    }
+
+    public function getRole(): ?string
+    {
+        return $this->role;
+    }
+
+    public function setRole(string $role): self
+    {
+        $this->role = $role;
+        return $this;
+    }
+
+    public function hasRole(string $role): bool
+    {
+        return $this->role === $role;
+    }
+
     public function getTasks(): Collection
     {
         return $this->tasks;
     }
 
-    /**
-     * Zwraca token rejestracyjny użytkownika.
-     *
-     * @return string|null
-     */
-    public function getRegistrationToken(): ?string
+    public function addTask(Task $task): self
     {
-        return $this->registrationToken;
+        if (!$this->tasks->contains($task)) {
+            $this->tasks[] = $task;
+            $task->addUser($this);
+        }
+        return $this;
     }
 
-    /**
-     * Ustawia token rejestracyjny użytkownika.
-     *
-     * @param string $token
-     * @return self
-     */
-    public function setRegistrationToken(string $token): self
+    public function removeTask(Task $task): self
     {
-        $this->registrationToken = $token;
+        if ($this->tasks->removeElement($task)) {
+            $task->removeUser($this);
+        }
+        return $this;
+    }
+
+    public function getTaskUsers(): Collection
+    {
+        return $this->taskUsers;
+    }
+
+    public function addTaskUser(TaskUser $taskUser): self
+    {
+        if (!$this->taskUsers->contains($taskUser)) {
+            $this->taskUsers[] = $taskUser;
+        }
+        return $this;
+    }
+
+    public function removeTaskUser(TaskUser $taskUser): self
+    {
+        $this->taskUsers->removeElement($taskUser);
+        return $this;
+    }
+
+    public function getProjects(): Collection
+    {
+        return $this->projects;
+    }
+
+    public function addProject(Project $project): self
+    {
+        if (!$this->projects->contains($project)) {
+            $this->projects[] = $project;
+            $project->setUser($this);
+        }
+        return $this;
+    }
+
+    public function removeProject(Project $project): self
+    {
+        if ($this->projects->removeElement($project)) {
+            if ($project->getUser() === $this) {
+                $project->setUser(null);
+            }
+        }
         return $this;
     }
 }

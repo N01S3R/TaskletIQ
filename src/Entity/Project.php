@@ -3,6 +3,8 @@
 namespace App\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
+use Doctrine\Common\Collections\Collection;
+use Doctrine\Common\Collections\ArrayCollection;
 
 /**
  * @ORM\Entity(repositoryClass="App\Repository\ProjectRepository")
@@ -38,6 +40,11 @@ class Project
      */
     private $createdAt;
 
+    public function __construct()
+    {
+        $this->tasks = new ArrayCollection();
+    }
+
     // Getters and Setters
 
     public function getProjectId(): ?int
@@ -53,7 +60,6 @@ class Project
     public function setProjectName(?string $projectName): self
     {
         $this->projectName = $projectName;
-
         return $this;
     }
 
@@ -65,11 +71,10 @@ class Project
     public function setUser(?User $user): self
     {
         $this->user = $user;
-
         return $this;
     }
 
-    public function getTasks(): ?\Doctrine\Common\Collections\Collection
+    public function getTasks(): Collection
     {
         return $this->tasks;
     }
@@ -89,7 +94,6 @@ class Project
     public function setCreatedAt(?\DateTimeInterface $createdAt): self
     {
         $this->createdAt = $createdAt;
-
         return $this;
     }
 }

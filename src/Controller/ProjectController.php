@@ -2,6 +2,7 @@
 
 namespace App\Controller;
 
+use App\Entity\Task;
 use App\Entity\User;
 use App\Entity\Project;
 
@@ -105,7 +106,7 @@ class ProjectController extends BaseController
         if ($this->checkRole('creator')) {
             $userId = $this->auth->getUserId();
             $projectRepository = $this->getRepository(Project::class);
-            $projectsWithTasks = $projectRepository->getProjectsWithTasksByUserId($userId);
+            $projectsWithTasks = $projectRepository->getProjectWithTasksAndUsers($userId);
 
             // Przygotowanie danych do przekazania do widoku
             $data = [
@@ -152,12 +153,6 @@ class ProjectController extends BaseController
         exit;
     }
 
-    /**
-     * Aktualizuje nazwę projektu na podstawie danych przesłanych metodą PUT.
-     *
-     * @param int $projectId Identyfikator projektu
-     * @return void
-     */
     public function updateProject($projectId)
     {
         $responseData = [];
@@ -175,13 +170,26 @@ class ProjectController extends BaseController
                     $project->setProjectName($projectName);
                     $this->entityManager->flush();
 
+                    // Pobranie zadań przypisanych do projektu
+                    $tasks = $this->entityManager->getRepository(Task::class)->findBy(['project' => $project]);
+
                     // Przygotowanie zaktualizowanych danych projektu
                     $updatedProject = [
                         'project_id' => $project->getProjectId(),
                         'project_name' => $project->getProjectName(),
                         'created_at' => $project->getCreatedAt()->format('Y-m-d H:i:s'), // lub inny format daty
-                        // Dodaj inne właściwości, które chcesz zwrócić
+                        'tasks' => [],  // Dodajemy tablicę na zadania
                     ];
+
+                    // Dodanie zadań do zaktualizowanego projektu
+                    foreach ($tasks as $task) {
+                        $updatedProject['tasks'][] = [
+                            'task_id' => $task->getTaskId(),
+                            'task_name' => $task->getTaskName(),
+                            'task_description' => $task->getTaskDescription(),
+                            'task_progress' => $task->getTaskProgress(),
+                        ];
+                    }
 
                     $responseData['success'] = 'Zaktualizowano nazwę projektu "' . $projectName . '"';
                     $responseData['updatedProject'] = $updatedProject;
