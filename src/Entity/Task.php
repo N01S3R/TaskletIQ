@@ -50,13 +50,18 @@ class Task
     private $taskStatus;
 
     /**
-     * @ORM\ManyToOne(targetEntity="Project", inversedBy="tasks")
-     * @ORM\JoinColumn(name="project_id", referencedColumnName="project_id")
+     * @ORM\ManyToOne(targetEntity="App\Entity\Project", inversedBy="tasks")
+     * @ORM\JoinColumn(name="project_id", referencedColumnName="project_id", nullable=true, onDelete="SET NULL")
      */
     private $project;
 
     /**
-     * @ORM\ManyToMany(targetEntity="User", inversedBy="tasks")
+     * @ORM\Column(type="integer", name="user_id", nullable=true)
+     */
+    private $userId;
+
+    /**
+     * @ORM\ManyToMany(targetEntity="App\Entity\User", inversedBy="tasks")
      * @ORM\JoinTable(name="tasks_users",
      *      joinColumns={@ORM\JoinColumn(name="task_id", referencedColumnName="task_id")},
      *      inverseJoinColumns={@ORM\JoinColumn(name="user_id", referencedColumnName="user_id")}
@@ -153,6 +158,17 @@ class Task
         return $this;
     }
 
+    public function getUserId(): ?int
+    {
+        return $this->userId;
+    }
+
+    public function setUserId(?int $userId): self
+    {
+        $this->userId = $userId;
+        return $this;
+    }
+
     public function getUsers(): Collection
     {
         return $this->users;
@@ -164,6 +180,7 @@ class Task
             $this->users[] = $user;
             $user->addTask($this);
         }
+
         return $this;
     }
 
@@ -172,6 +189,7 @@ class Task
         if ($this->users->removeElement($user)) {
             $user->removeTask($this);
         }
+
         return $this;
     }
 

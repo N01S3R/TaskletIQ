@@ -75,7 +75,7 @@ class UserRepository extends EntityRepository
      */
     public function findLoggedInUserById(int $userId): ?User
     {
-        return $this->findOneBy(['userId' => $userId, 'loggedIn' => true]);
+        return $this->findOneBy(['userId' => $userId, 'logged' => true]);
     }
 
     /**
@@ -88,7 +88,7 @@ class UserRepository extends EntityRepository
     {
         $user = $this->find($userId);
         if ($user) {
-            $user->setLoggedIn(true);
+            $user->setLogged(true);
             $this->_em->flush();
         }
     }
@@ -103,7 +103,7 @@ class UserRepository extends EntityRepository
     {
         $user = $this->find($userId);
         if ($user) {
-            $user->setLoggedIn(false);
+            $user->setLogged(false);
             $this->_em->flush();
         }
     }
@@ -115,11 +115,10 @@ class UserRepository extends EntityRepository
      */
     public function findAllOrderedByRegistrationDate(): array
     {
-        $qb = $this->createQueryBuilder('u')
+        return $this->createQueryBuilder('u')
             ->orderBy('u.registrationDate', 'DESC')
-            ->getQuery();
-
-        return $qb->getResult();
+            ->getQuery()
+            ->getResult();
     }
 
     /**
@@ -144,9 +143,11 @@ class UserRepository extends EntityRepository
      */
     public function addProjectToUser(User $user, Project $project): void
     {
-        $user->getProjects()->add($project);
-        $this->_em->persist($user);
-        $this->_em->flush();
+        if (!$user->getProjects()->contains($project)) {
+            $user->getProjects()->add($project);
+            $this->_em->persist($user);
+            $this->_em->flush();
+        }
     }
 
     /**
@@ -158,9 +159,11 @@ class UserRepository extends EntityRepository
      */
     public function removeProjectFromUser(User $user, Project $project): void
     {
-        $user->getProjects()->removeElement($project);
-        $this->_em->persist($user);
-        $this->_em->flush();
+        if ($user->getProjects()->contains($project)) {
+            $user->getProjects()->removeElement($project);
+            $this->_em->persist($user);
+            $this->_em->flush();
+        }
     }
 
     /**
@@ -172,9 +175,11 @@ class UserRepository extends EntityRepository
      */
     public function addTaskToUser(User $user, Task $task): void
     {
-        $user->getTasks()->add($task);
-        $this->_em->persist($user);
-        $this->_em->flush();
+        if (!$user->getTasks()->contains($task)) {
+            $user->getTasks()->add($task);
+            $this->_em->persist($user);
+            $this->_em->flush();
+        }
     }
 
     /**
@@ -186,9 +191,11 @@ class UserRepository extends EntityRepository
      */
     public function removeTaskFromUser(User $user, Task $task): void
     {
-        $user->getTasks()->removeElement($task);
-        $this->_em->persist($user);
-        $this->_em->flush();
+        if ($user->getTasks()->contains($task)) {
+            $user->getTasks()->removeElement($task);
+            $this->_em->persist($user);
+            $this->_em->flush();
+        }
     }
 
     /**
@@ -201,15 +208,13 @@ class UserRepository extends EntityRepository
     public function findUsersByRegistrationToken(string $registrationToken, int $loggedInUserId): array
     {
         $qb = $this->createQueryBuilder('u')
-            ->select('u.userId AS user_id, u.login AS user_login, u.avatar AS user_avatar') // Użyj aliasów
+            ->select('u.userId AS user_id, u.login AS user_login, u.avatar AS user_avatar')
             ->where('u.registrationToken = :registrationToken')
             ->andWhere('u.userId != :loggedInUserId')
             ->setParameter('registrationToken', $registrationToken)
             ->setParameter('loggedInUserId', $loggedInUserId);
 
-        $result = $qb->getQuery()->getArrayResult();
-
-        return $result;
+        return $qb->getQuery()->getArrayResult();
     }
 
     /**
@@ -222,7 +227,7 @@ class UserRepository extends EntityRepository
     {
         return $this->createQueryBuilder('u')
             ->select('COUNT(t.id)')
-            ->join('u.tokens', 't') // Zakładając, że masz relację do tokenów w encji User
+            ->join('u.tokens', 't')
             ->where('u.userId = :userId')
             ->setParameter('userId', $userId)
             ->getQuery()

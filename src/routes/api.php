@@ -2,8 +2,8 @@
 
 $apiRoutes = [
     // Site
-    '/validate-field' => [
-        'GET' => 'RegisterController@validateSignupData'
+    '/api/validate-field' => [
+        'POST' => 'RegisterController@validateSignupData'
     ],
     // Creator
     '/api/project/add' => [
@@ -34,10 +34,10 @@ $apiRoutes = [
         'DELETE' => 'CreatorController@deleteToken'
     ],
     '/api/creator/assign' => [
-        'POST' => 'CreatorController@assignUserToTask'
+        'POST' => 'TaskController@assignUserToTask'
     ],
     '/api/creator/unassign' => [
-        'POST' => 'CreatorController@unassignUserFromTask'
+        'POST' => 'TaskController@unassignUserFromTask'
     ],
     // Operator
     '/api/status' => [

@@ -2,9 +2,11 @@
 
 namespace App\Controller;
 
-use App\Entity\Project;
 use App\View;
 use App\Entity\Task;
+use App\Entity\User;
+use App\Entity\Project;
+use App\Entity\TaskUser;
 
 /**
  * Kontroler obsługujący operacje na zadaniach.
@@ -17,14 +19,14 @@ class TaskController extends BaseController
      */
     public function displayAllTasks(): void
     {
-        if ($this->auth->getUserId()) {
-            $userId = $this->auth->getUserId();
+        $userId = $this->auth->getUserId();
+        if ($userId) {
             $projectRepository = $this->getRepository(Project::class);
-            $projectsWithTasks = $projectRepository->getProjectsWithTasksByUserId($userId);
+            $projectsWithTasks = $projectRepository->getProjectWithTasksAndUsers($userId);
 
             $data = [
                 'pageTitle' => 'Wszystkie zadania',
-                'projects' => $projectsWithTasks
+                'projects' => !empty($projectsWithTasks) ? $projectsWithTasks : []
             ];
 
             $this->render('creator/creator_all_tasks', $data);
@@ -32,6 +34,63 @@ class TaskController extends BaseController
             header('Location: /login');
             exit();
         }
+    }
+
+    /**
+     * Wyświetla zadania na podstawie identyfikatora postępu.
+     * 
+     * @param int $progressId Identyfikator postępu zadania.
+     */
+    public function displayTasksByProgress($progressId): void
+    {
+        $userId = $this->auth->getUserId();
+        if ($userId && in_array($progressId, [1, 2, 3])) {
+            $taskRepository = $this->getRepository(Task::class);
+
+            // Pobranie zadań
+            $tasks = $taskRepository->getGroupedTasksByProgress($userId, $progressId);
+
+            // Pogrupowanie zadań według projektów
+            $groupedTasks = [];
+            foreach ($tasks as $task) {
+                $projectId = $task['project']['projectId'];
+                $projectName = $task['project']['projectName'];
+                if (!isset($groupedTasks[$projectName])) {
+                    $groupedTasks[$projectName] = [
+                        'project_id' => $projectId,
+                        'tasks' => []
+                    ];
+                }
+                $groupedTasks[$projectName]['tasks'][] = [
+                    'task_id' => $task['taskId'],
+                    'task_name' => $task['taskName'],
+                    'task_description' => $task['taskDescription'],
+                ];
+            }
+
+            $data = [
+                'pageTitle' => 'Zadania w postępie',
+                'groupedTasks' => $groupedTasks,
+                'color' => $this->getProgressColor($progressId)
+            ];
+
+            $this->render('creator/creator_tasks_progress', $data);
+        } else {
+            header('Location: /login');
+            exit();
+        }
+    }
+
+    /**
+     * Zwraca kolor na podstawie identyfikatora postępu.
+     *
+     * @param int $progressId Identyfikator postępu
+     * @return string
+     */
+    private function getProgressColor(int $progressId): string
+    {
+        $colors = [1 => 'danger', 2 => 'warning', 3 => 'success'];
+        return $colors[$progressId] ?? '';
     }
 
     /**
@@ -229,6 +288,124 @@ class TaskController extends BaseController
 
         // Przekierowanie po zmianie statusu zadania
         $this->view->render('user/index');
+    }
+
+    /**
+     * Przypisuje użytkownika do zadania.
+     * Obsługuje dane JSON z żądania i sprawdza uprawnienia.
+     */
+    public function assignUserToTask(): void
+    {
+        $responseData = [];
+        if (!$this->auth->getUserId()) {
+            $responseData['error'] = 'Brak odpowiednich uprawnień do wykonania tej operacji.';
+            echo json_encode($responseData);
+            return;
+        }
+
+        $taskRepository = $this->getRepository(Task::class);
+        $userRepository = $this->getRepository(User::class);
+        $taskUserRepository = $this->getRepository(TaskUser::class);
+        $requestData = json_decode(file_get_contents('php://input'), true);
+        $taskId = $requestData['taskId'] ?? null;
+        $userId = $requestData['userId'] ?? null;
+
+        if (!$taskId || !$userId) {
+            $responseData['error'] = 'Nie podano prawidłowego ID zadania lub użytkownika.';
+            echo json_encode($responseData);
+            return;
+        }
+
+        $task = $taskRepository->find($taskId);
+        if (!$task) {
+            $responseData['error'] = 'Zadanie nie znalezione.';
+            echo json_encode($responseData);
+            return;
+        }
+
+        $user = $userRepository->find($userId);
+        if (!$user) {
+            $responseData['error'] = "Użytkownik o ID '{$userId}' nie znaleziony.";
+            echo json_encode($responseData);
+            return;
+        }
+
+        $isUserAssigned = $taskUserRepository->isUserAssignedToTask($taskId, $userId);
+        if ($isUserAssigned) {
+            $responseData['error'] = "Użytkownik '{$user->getUsername()}' jest już przypisany do zadania " . $task->getTaskName();
+            echo json_encode($responseData);
+            return;
+        }
+
+        $assignedUsersCount = $taskUserRepository->getAssignedUsersCount($taskId);
+        if ($assignedUsersCount >= 12) {
+            $responseData['error'] = "Osiągnięto maksymalną liczbę przypisanych użytkowników do tego zadania.";
+            echo json_encode($responseData);
+            return;
+        }
+
+        $taskUserRepository->assignTaskToUser($task, $user);
+
+        $responseData['success'] = 'Użytkownik "' . $user->getUsername() . '" został przypisany do zadania "' . $task->getTaskName() . '"';
+        $responseData['user'] = [
+            'user_id' => $user->getUserId(),
+            'user_login' => $user->getLogin(),
+            'user_avatar' => $user->getAvatar(),
+        ];
+        echo json_encode($responseData);
+    }
+
+
+    /**
+     * Usuwa przypisanie użytkownika do zadania.
+     * Sprawdza uprawnienia i dane wejściowe przed wykonaniem operacji.
+     */
+    public function unassignUserFromTask(): void
+    {
+        $responseData = [];
+        if (!$this->auth->getUserId()) {
+            $responseData['error'] = 'Brak odpowiednich uprawnień do wykonania tej operacji.';
+            echo json_encode($responseData);
+            return;
+        }
+
+        $taskRepository = $this->getRepository(Task::class);
+        $userRepository = $this->getRepository(User::class);
+        $taskUserRepository = $this->getRepository(TaskUser::class);
+        $requestData = json_decode(file_get_contents('php://input'), true);
+        $taskId = $requestData['taskId'] ?? null;
+        $userId = $requestData['userId'] ?? null;
+
+        $task = $taskRepository->find($taskId);
+        if (!$task) {
+            $responseData['error'] = 'Zadanie nie znalezione.';
+            echo json_encode($responseData);
+            return;
+        }
+
+        $user = $userRepository->find($userId);
+        if (!$user) {
+            $responseData['error'] = "Użytkownik o ID '{$userId}' nie znaleziony.";
+            echo json_encode($responseData);
+            return;
+        }
+
+        $isUserAssigned = $taskUserRepository->isUserAssignedToTask($taskId, $userId);
+        if (!$isUserAssigned) {
+            $responseData['error'] = "Użytkownik '{$user->getUsername()}' nie jest przypisany do zadania " . $task->getTaskName();
+            echo json_encode($responseData);
+            return;
+        }
+
+        $taskUserRepository->removeUserAssignment($taskId, $userId);
+
+        $responseData['success'] = 'Przypisanie "' . $task->getTaskName() . '" do "' . $user->getUsername() . '" zostało usunięte';
+        $responseData['user'] = [
+            'user_id' => $user->getUserId(),
+            'user_login' => $user->getLogin(),
+            'user_avatar' => $user->getAvatar(),
+        ];
+        echo json_encode($responseData);
     }
 
     /**

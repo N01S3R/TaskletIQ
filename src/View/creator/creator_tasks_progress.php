@@ -5,7 +5,7 @@
         TaskletIQ
         <img src="/images/loading.gif" alt="Loading..." width="150">
     </div>
-    <div class="container my-4">
+    <div class="container my-4" v-else>
         <nav aria-label="breadcrumb" class="main-breadcrumb mb-4">
             <ol class="breadcrumb">
                 <li class="breadcrumb-item"><a href="">Creator</a></li>
@@ -21,14 +21,14 @@
             <strong>Brak zadań!</strong> Nie znaleziono żadnych zadań do wyświetlenia.
         </div>
         <div v-else>
-            <div v-for="(tasks, projectName) in groupedTasks" :key="projectName" class="card mt-3">
+            <div v-for="(group, projectName) in groupedTasks" :key="projectName" class="card mt-3">
                 <div class="card-header bg-info mb-3">
                     <h3 class="p-2">Projekt: {{ projectName }}</h3>
                 </div>
                 <div class="card-body">
                     <div class="row">
-                        <div v-for="task in tasks" :key="task.task_id" class="col-md-4 p-3">
-                            <a :href="'/creator/project/' + task.project_id" :class="['card', 'text-white', color, 'mb-3']" style="text-decoration: none;">
+                        <div v-for="task in group.tasks" :key="task.task_id" class="col-md-4 p-3">
+                            <a :href="'/creator/project/' + group.project_id" :class="['card', 'text-white', color, 'mb-3']" style="text-decoration: none;">
                                 <div class="card-header">{{ task.task_name }}</div>
                                 <div class="card-body p-4">
                                     <p class="card-text">Opis zadania: {{ task.task_description }}</p>

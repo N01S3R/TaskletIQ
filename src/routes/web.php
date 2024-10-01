@@ -31,7 +31,7 @@ $webRoutes = [
         'GET' => 'TaskController@displayAllTasks'
     ],
     '/creator/tasks/(\d+)' => [
-        'GET' => 'CreatorController@displayTasksByProgress'
+        'GET' => 'TaskController@displayTasksByProgress'
     ],
     '/creator/delegate' => [
         'GET' => 'CreatorController@displayDelegateForm',

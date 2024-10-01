@@ -46,9 +46,9 @@
                             <label for="token" class="form-label mb-0">Kończy ważność</label>
                         </div>
                         <div ref="linksList" class="custom-row-links p-3" style="position: relative;">
-                            <div v-for="(link, index) in links" :key="link.id" class="input-group mb-3">
+                            <div v-for="(link, index) in links" :key="link.token_id" class="input-group mb-3">
                                 <span class="input-group-text">{{ index + 1 }}</span>
-                                <input type="hidden" v-model="link.id">
+                                <input type="hidden" v-model="link.token_id">
                                 <input type="text" class="form-control" :value="link.token" readonly>
                                 <button class="btn btn-primary" type="button" @click="copyLink(link.token)"><i class="bi bi-clipboard"></i></button>
                                 <span class="input-group-text">{{ formatDateTime(link.expiration) }}</span>
@@ -135,14 +135,14 @@
                 const url = '/api/code/' + this.token;
                 axios.post(url)
                     .then(response => {
-                        if (response.data.token) {
+                        if (response.data.success) {
                             const newToken = {
-                                id: response.data.token.id,
-                                token: response.data.token.token,
-                                expiration: response.data.token.expiration
+                                token_id: response.data.token_id,
+                                token: response.data.token,
+                                expiration: response.data.expiration
                             };
                             this.links.push(newToken);
-                            this.showNotification('success', response.data.message);
+                            this.showNotification('success', 'Token został wygenerowany pomyślnie.');
                         } else {
                             this.showNotification('error', response.data.message);
                         }
@@ -198,18 +198,23 @@
             },
             deleteToken() {
                 if (this.deleteIndex !== null && this.deleteIndex >= 0 && this.deleteIndex < this.links.length) {
-                    const linkId = this.links[this.deleteIndex].id;
-                    const url = '/api/token/delete/' + linkId;
-                    axios.delete(url)
-                        .then(response => {
-                            this.links.splice(this.deleteIndex, 1);
-                            this.deleteIndex = null;
-                            this.showNotification('success', response.data.message);
-                        })
-                        .catch(error => {
-                            console.error('Wystąpił błąd:', error);
-                            alert('Wystąpił błąd podczas wysyłania żądania.');
-                        });
+                    const link = this.links[this.deleteIndex];
+                    const linkId = link ? link.token_id : undefined;
+                    if (linkId) {
+                        const url = '/api/token/delete/' + linkId;
+                        axios.delete(url)
+                            .then(response => {
+                                this.links.splice(this.deleteIndex, 1);
+                                this.deleteIndex = null;
+                                this.showNotification('success', response.data.message);
+                            })
+                            .catch(error => {
+                                console.error('Wystąpił błąd:', error);
+                                this.showNotification('error', 'Wystąpił błąd podczas wysyłania żądania.');
+                            });
+                    } else {
+                        console.error('Nie znaleziono id linku do usunięcia.');
+                    }
                 } else {
                     console.error("Nieprawidłowy indeks linku do usunięcia.");
                 }

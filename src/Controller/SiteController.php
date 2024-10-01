@@ -28,7 +28,7 @@ class SiteController extends BaseController
         // Przygotowanie danych do wysłania
         $processedUsers = array_map(function ($user) {
             return [
-                'name' => $user->getName(),
+                'name' => $user->getUsername(),
                 'registrationDate' => $user->getRegistrationDate()->format('Y-m-d H:i:s')
             ];
         }, $lastRegisteredUsers);

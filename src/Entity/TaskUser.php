@@ -18,14 +18,14 @@ class TaskUser
     private $id;
 
     /**
-     * @ORM\ManyToOne(targetEntity="Task", inversedBy="taskUsers")
-     * @ORM\JoinColumn(name="task_id", referencedColumnName="task_id")
+     * @ORM\ManyToOne(targetEntity="App\Entity\Task", inversedBy="taskUsers")
+     * @ORM\JoinColumn(name="task_id", referencedColumnName="task_id", onDelete="CASCADE")
      */
     private $task;
 
     /**
-     * @ORM\ManyToOne(targetEntity="User", inversedBy="taskUsers")
-     * @ORM\JoinColumn(name="user_id", referencedColumnName="user_id")
+     * @ORM\ManyToOne(targetEntity="App\Entity\User", inversedBy="taskUsers")
+     * @ORM\JoinColumn(name="user_id", referencedColumnName="user_id", onDelete="CASCADE")
      */
     private $user;
 

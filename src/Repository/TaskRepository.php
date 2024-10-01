@@ -6,6 +6,7 @@ use App\Entity\Task;
 use App\Entity\User;
 use App\Entity\Project;
 use Doctrine\ORM\EntityRepository;
+use Doctrine\ORM\EntityNotFoundException;
 
 class TaskRepository extends EntityRepository
 {
@@ -18,8 +19,7 @@ class TaskRepository extends EntityRepository
     public function getAllTasksByUserId(int $userId): array
     {
         return $this->createQueryBuilder('t')
-            ->join('t.users', 'u')
-            ->where('u.userId = :userId')
+            ->where('t.userId = :userId')
             ->setParameter('userId', $userId)
             ->getQuery()
             ->getResult();
@@ -32,7 +32,7 @@ class TaskRepository extends EntityRepository
      * @param int $userId
      * @return Task|null
      */
-    public function getTaskById(int $taskId, int $userId)
+    public function getTaskById(int $taskId, int $userId): ?Task
     {
         return $this->createQueryBuilder('t')
             ->where('t.taskId = :taskId')
@@ -53,19 +53,6 @@ class TaskRepository extends EntityRepository
     public function getTasksByProjectId(int $projectId): array
     {
         return $this->findBy(['project' => $projectId]);
-    }
-
-    /**
-     * Zlicza wszystkie zadania.
-     *
-     * @return int
-     */
-    public function countAllTasks(): int
-    {
-        return $this->createQueryBuilder('t')
-            ->select('COUNT(t.taskId)')
-            ->getQuery()
-            ->getSingleScalarResult();
     }
 
     /**
@@ -96,9 +83,8 @@ class TaskRepository extends EntityRepository
     public function getTasksByProgress(int $userId, int $progress): array
     {
         return $this->createQueryBuilder('t')
-            ->innerJoin('t.users', 'u')
             ->where('t.taskProgress = :progress')
-            ->andWhere('u.userId = :userId')
+            ->andWhere('t.userId = :userId')
             ->setParameter('progress', $progress)
             ->setParameter('userId', $userId)
             ->getQuery()
@@ -114,35 +100,15 @@ class TaskRepository extends EntityRepository
      */
     public function getGroupedTasksByProgress(int $userId, int $progressId): array
     {
-        $qb = $this->createQueryBuilder('t')
-            ->innerJoin('t.project', 'p')
-            ->where('t.user = :userId')
-            ->andWhere('t.taskProgress = :progressId')
+        return $this->createQueryBuilder('t')
+            ->select('t, p')
+            ->join('t.project', 'p')
+            ->where('t.userId = :userId')
+            ->andWhere('t.taskProgress = :taskProgress')
             ->setParameter('userId', $userId)
-            ->setParameter('progressId', $progressId)
-            ->select('p.projectName, t.taskName, t.taskDescription, p.projectId')
-            ->getQuery();
-
-        $tasks = $qb->getArrayResult();
-
-        // Grupowanie zadań według nazwy projektu
-        $groupedTasks = [];
-        foreach ($tasks as $taskItem) {
-            $projectName = $taskItem['projectName'];
-            $projectId = $taskItem['projectId'];
-
-            if (!isset($groupedTasks[$projectName])) {
-                $groupedTasks[$projectName] = [];
-            }
-
-            $groupedTasks[$projectName][] = [
-                'task_name' => $taskItem['taskName'],
-                'task_description' => $taskItem['taskDescription'],
-                'project_id' => $projectId
-            ];
-        }
-
-        return $groupedTasks;
+            ->setParameter('taskProgress', $progressId)
+            ->getQuery()
+            ->getArrayResult();
     }
 
     /**
@@ -152,7 +118,7 @@ class TaskRepository extends EntityRepository
      * @param int $userId Identyfikator użytkownika.
      * @return bool Zwraca true, jeśli zadanie istnieje, w przeciwnym razie false.
      */
-    public function taskExists($title, $userId): bool
+    public function taskExists(string $title, int $userId): bool
     {
         $query = $this->createQueryBuilder('t')
             ->select('COUNT(t.taskId)')
@@ -172,20 +138,28 @@ class TaskRepository extends EntityRepository
      * @param int $projectId Identyfikator projektu, do którego przypisane jest zadanie.
      * @param string $title Tytuł zadania.
      * @param string $description Opis zadania.
-     * @param string $descriptionLong Długi opis zadania.
+     * @param string|null $descriptionLong Długi opis zadania.
      * @param int $userId Identyfikator użytkownika, który stworzył zadanie.
      * @return Task Zwraca nowo utworzone zadanie.
+     * @throws EntityNotFoundException
      */
-    public function addTask($projectId, $title, $description, $descriptionLong, $userId): ?Task
+    public function addTask(int $projectId, string $title, string $description, ?string $descriptionLong, int $userId): ?Task
     {
+        $project = $this->getEntityManager()->getRepository(Project::class)->find($projectId);
+        $user = $this->getEntityManager()->getRepository(User::class)->find($userId);
+
+        if (!$project || !$user) {
+            throw new EntityNotFoundException("Projekt lub użytkownik nie znaleziony.");
+        }
+
         $task = new Task();
         $task->setTaskName($title);
         $task->setTaskDescription($description);
         $task->setTaskDescriptionLong($descriptionLong ?? '');
         $task->setTaskProgress(0);
         $task->setTaskStatus("Nowy");
-        $task->setProject($this->getEntityManager()->getRepository(Project::class)->find($projectId));
-        $task->setUser($this->getEntityManager()->getRepository(User::class)->find($userId));
+        $task->setProject($project);
+        $task->setUser($user);
         $task->setTaskCreatedAt(new \DateTime());
 
         $this->_em->persist($task);
@@ -200,10 +174,10 @@ class TaskRepository extends EntityRepository
      * @param int $taskId Identyfikator zadania do aktualizacji
      * @param string|null $title Nowy tytuł zadania
      * @param string|null $description Nowy opis zadania
-     * @param string $descriptionLong Nowy długi opis zadania
+     * @param string|null $descriptionLong Nowy długi opis zadania
      * @return bool Zwraca true, jeśli aktualizacja powiodła się, w przeciwnym razie false
      */
-    public function setTask(int $taskId, ?string $title, ?string $description, string $descriptionLong): bool
+    public function setTask(int $taskId, ?string $title, ?string $description, ?string $descriptionLong): bool
     {
         $task = $this->find($taskId);
 
@@ -211,9 +185,15 @@ class TaskRepository extends EntityRepository
             return false;
         }
 
-        $task->setTaskName($title);
-        $task->setTaskDescription($description);
-        $task->setTaskDescriptionLong($descriptionLong);
+        if ($title !== null) {
+            $task->setTaskName($title);
+        }
+        if ($description !== null) {
+            $task->setTaskDescription($description);
+        }
+        if ($descriptionLong !== null) {
+            $task->setTaskDescriptionLong($descriptionLong);
+        }
 
         // Zapisanie zmian
         $this->_em->flush();

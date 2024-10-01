@@ -17,13 +17,13 @@ class TaskUserRepository extends EntityRepository
      */
     public function findUsersByTaskId(int $taskId): array
     {
-        $qb = $this->createQueryBuilder('tu')
+        return $this->createQueryBuilder('tu')
             ->select('u')
             ->join('tu.user', 'u')
             ->where('tu.task = :taskId')
-            ->setParameter('taskId', $taskId);
-
-        return $qb->getQuery()->getResult();
+            ->setParameter('taskId', $taskId)
+            ->getQuery()
+            ->getResult();
     }
 
     /**
@@ -35,16 +35,14 @@ class TaskUserRepository extends EntityRepository
      */
     public function isUserAssignedToTask(int $taskId, int $userId): bool
     {
-        $qb = $this->createQueryBuilder('tu')
+        return (bool) $this->createQueryBuilder('tu')
             ->select('COUNT(tu.id)')
             ->where('tu.task = :taskId')
             ->andWhere('tu.user = :userId')
             ->setParameter('taskId', $taskId)
-            ->setParameter('userId', $userId);
-
-        $count = (int) $qb->getQuery()->getSingleScalarResult();
-
-        return $count > 0;
+            ->setParameter('userId', $userId)
+            ->getQuery()
+            ->getSingleScalarResult();
     }
 
     /**
@@ -55,26 +53,27 @@ class TaskUserRepository extends EntityRepository
      */
     public function getAssignedUsersCount(int $taskId): int
     {
-        $qb = $this->createQueryBuilder('tu')
+        return (int) $this->createQueryBuilder('tu')
             ->select('COUNT(tu.id)')
             ->where('tu.task = :taskId')
-            ->setParameter('taskId', $taskId);
-
-        return (int) $qb->getQuery()->getSingleScalarResult();
+            ->setParameter('taskId', $taskId)
+            ->getQuery()
+            ->getSingleScalarResult();
     }
 
     /**
-     * Przypisuje użytkownika do zadania.
+     * Tworzy relację między zadaniem a użytkownikiem, czyli przypisuje użytkownika do zadania.
+     * Tutaj tylko zapytanie, bez walidacji.
      *
-     * @param int $taskId
-     * @param int $userId
+     * @param Task $task
+     * @param User $user
      * @return void
      */
-    public function assignTaskToUser(int $taskId, int $userId): void
+    public function assignTaskToUser(Task $task, User $user): void
     {
         $taskUser = new TaskUser();
-        $taskUser->setTask($this->getEntityManager()->getRepository(Task::class)->find($taskId));
-        $taskUser->setUser($this->getEntityManager()->getRepository(User::class)->find($userId));
+        $taskUser->setTask($task);
+        $taskUser->setUser($user);
 
         $this->_em->persist($taskUser);
         $this->_em->flush();
@@ -87,7 +86,7 @@ class TaskUserRepository extends EntityRepository
      * @param int $userId
      * @return void
      */
-    public function removeUserAssignmentToTask(int $taskId, int $userId): void
+    public function removeUserAssignment(int $taskId, int $userId): void
     {
         $qb = $this->createQueryBuilder('tu')
             ->delete()

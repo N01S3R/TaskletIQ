@@ -25,13 +25,13 @@ class Project
     private $projectName;
 
     /**
-     * @ORM\ManyToOne(targetEntity="User", inversedBy="projects")
-     * @ORM\JoinColumn(name="user_id", referencedColumnName="user_id")
+     * @ORM\ManyToOne(targetEntity="App\Entity\User", inversedBy="projects")
+     * @ORM\JoinColumn(name="user_id", referencedColumnName="user_id", nullable=true, onDelete="SET NULL")
      */
     private $user;
 
     /**
-     * @ORM\OneToMany(targetEntity="Task", mappedBy="project")
+     * @ORM\OneToMany(targetEntity="App\Entity\Task", mappedBy="project", cascade={"persist", "remove"}, orphanRemoval=true)
      */
     private $tasks;
 
@@ -81,8 +81,23 @@ class Project
 
     public function addTask(Task $task): self
     {
-        $this->tasks[] = $task;
-        $task->setProject($this);
+        if (!$this->tasks->contains($task)) {
+            $this->tasks[] = $task;
+            $task->setProject($this);
+        }
+
+        return $this;
+    }
+
+    public function removeTask(Task $task): self
+    {
+        if ($this->tasks->removeElement($task)) {
+            // Set the owning side to null (unless already changed)
+            if ($task->getProject() === $this) {
+                $task->setProject(null);
+            }
+        }
+
         return $this;
     }
 

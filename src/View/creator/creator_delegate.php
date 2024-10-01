@@ -1,9 +1,5 @@
 <?php App\Helpers\Template::partials('header_creator'); ?>
-<!-- <?php
-        echo '<pre>';
-        var_dump($data);
-        echo '</pre>';
-        ?> -->
+
 <div id="app">
     <div v-if="loading" class="loader">
         TaskletIQ
@@ -34,38 +30,53 @@
                     </div>
                     <div class="card-body" ref="projectList" style="position: relative;">
                         <div class="custom-row-delegate">
-                            <div v-for="project in userProjects" :key="project.project_id">
-                                <div class="col-12 col-xl-4">
-                                    <div class="card bg-success text-white">
-                                        <div class="card-body">
-                                            <h5 class="card-title">{{ project.project_name }}</h5>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div v-for="task in project.tasks" :key="task.task_id">
-                                    <div class="row my-2 mx-1">
-                                        <div class="col-sm-12 col-md-4 col-lg-9 col-xl-4 my-2">
-                                            <div class="card border-warning" @click="selectTask(task.task_id)" :class="{ 'selected': selectedTaskId === task.task_id }" style="cursor: pointer;">
-                                                <div class="card-body">
-                                                    <h5 class="card-title">Zadanie: {{ task.task_name }}</h5>
-                                                    <p class="card-text">{{ task.task_created_at }}</p>
-                                                </div>
+                            <div v-if="userProjects.length === 0" class="text-center">
+                                <p>Nie masz żadnych projektów.</p>
+                            </div>
+
+                            <div v-else>
+                                <div v-for="project in userProjects" :key="project.project_id">
+                                    <div class="col-12">
+                                        <div class="card bg-success text-white">
+                                            <div class="card-body">
+                                                <h5 class="card-title">{{ project.project_name }}</h5>
                                             </div>
                                         </div>
-                                        <div class="col-12 col-md-8 col-lg-9 col-xl-8">
-                                            <div class="card border-danger">
-                                                <div class="card-body">
-                                                    <div class="row">
-                                                        <div class="col-4" v-for="(column, columnIndex) in Math.ceil(task.users.length / 4)" :key="columnIndex">
-                                                            <div v-for="user in task.users.slice(columnIndex * 4, (columnIndex + 1) * 4)" :key="user.user_id">
-                                                                <div class="d-flex align-items-center highlight-on-hover justify-content-center py-2" :data-id="user.user_id" @click="confirmAndUnassign(user.user_id, task.task_id)" style="cursor: pointer;">
-                                                                    <img :src="'/images/' + user.user_avatar" class="avatar-img" alt="User Avatar" style="height: 30px; width: 30px; margin-right: 5px;">
-                                                                    <span>{{ user.user_login }}</span>
-                                                                </div>
-                                                            </div>
+                                    </div>
+                                    <div v-if="project.tasks.length === 0" class="col-12 my-3">
+                                        <div class="card border-danger">
+                                            <div class="card-body text-center">
+                                                <p class="card-text">Brak zadań w tym projekcie.</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div v-else>
+                                        <div v-for="task in project.tasks" :key="task.task_id">
+                                            <div class="row my-2 mx-1">
+                                                <div class="col-sm-12 col-md-4 col-lg-9 col-xl-4 my-2">
+                                                    <div class="card border-warning" @click="selectTask(task.task_id)" :class="{ 'selected': selectedTaskId === task.task_id }" style="cursor: pointer;">
+                                                        <div class="card-body">
+                                                            <h5 class="card-title">Zadanie: {{ task.task_name }}</h5>
+                                                            <p class="card-text">{{ task.task_created_at }}</p>
                                                         </div>
                                                     </div>
-                                                    <div v-if="task.users.length > 11" class="alert alert-danger d-flex justify-content-center align-items-center mb-0 mt-2" role="alert">MAX</div>
+                                                </div>
+                                                <div class="col-12 col-md-8 col-lg-9 col-xl-8">
+                                                    <div class="card border-danger">
+                                                        <div class="card-body">
+                                                            <div class="row">
+                                                                <div class="col-4" v-for="(column, columnIndex) in Math.ceil(task.users.length / 4)" :key="columnIndex">
+                                                                    <div v-for="user in task.users.slice(columnIndex * 4, (columnIndex + 1) * 4)" :key="user.user_id">
+                                                                        <div class="d-flex align-items-center highlight-on-hover justify-content-center py-2" :data-id="user.user_id" @click="confirmAndUnassign(user.user_id, task.task_id)" style="cursor: pointer;">
+                                                                            <img :src="'/images/' + user.user_avatar" class="avatar-img" alt="User Avatar" style="height: 30px; width: 30px; margin-right: 5px;">
+                                                                            <span>{{ user.user_login }}</span>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                            <div v-if="task.users.length > 11" class="alert alert-danger d-flex justify-content-center align-items-center mb-0 mt-2" role="alert">MAX</div>
+                                                        </div>
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
@@ -342,9 +353,9 @@
                 }
             },
             mounted() {
+                this.initializeScrollbars();
                 setTimeout(() => {
                     this.loading = false;
-                    this.initializeScrollbars();
                 }, 1000);
             }
         }).mount('#app');

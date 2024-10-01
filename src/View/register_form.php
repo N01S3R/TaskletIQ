@@ -28,7 +28,7 @@
                                 <div class="mb-3">
                                     <label for="newUsername" class="form-label">Login:</label>
                                     <input type="text" class="form-control" id="newUsername" v-model="form.username" @input="debouncedValidateField('username')" required autocomplete="off">
-                                    <div v-if="errors.username" class="text-danger">{{ errors.user_login }}</div>
+                                    <div v-if="errors.username" class="text-danger">{{ errors.username }}</div>
                                 </div>
                                 <div class="mb-3">
                                     <label for="registration_code" class="form-label">Kod rejestracyjny (opcjonalnie):</label>
@@ -87,7 +87,7 @@
         methods: {
             async validateField(field) {
                 try {
-                    const response = await axios.post('/validate-field', {
+                    const response = await axios.post('/api/validate-field', {
                         field: field,
                         value: this.form[field]
                     });

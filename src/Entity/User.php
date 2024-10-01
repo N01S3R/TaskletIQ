@@ -65,17 +65,17 @@ class User
     private $role;
 
     /**
-     * @ORM\ManyToMany(targetEntity="Task", mappedBy="user")
+     * @ORM\ManyToMany(targetEntity="App\Entity\Task", mappedBy="users")
      */
     private $tasks;
 
     /**
-     * @ORM\OneToMany(targetEntity="TaskUser", mappedBy="user")
+     * @ORM\OneToMany(targetEntity="App\Entity\TaskUser", mappedBy="user")
      */
     private $taskUsers;
 
     /**
-     * @ORM\OneToMany(targetEntity="Project", mappedBy="user")
+     * @ORM\OneToMany(targetEntity="App\Entity\Project", mappedBy="user")
      */
     private $projects;
 
@@ -175,7 +175,7 @@ class User
         return $this->logged;
     }
 
-    public function setLoggedIn(bool $logged): self
+    public function setLogged(bool $logged): self
     {
         $this->logged = $logged;
         return $this;
