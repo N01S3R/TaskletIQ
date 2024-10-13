@@ -22,7 +22,7 @@
                 </a>
             </div>
         </header>
-        <div class="row">
+        <div ref="projectsList" class="row custom-row-tasks" style="position: relative;">
             <div v-for="project in userProjects" :key="project.project_id" class="col-md-4 px-4 pb-4">
                 <div class="card shadow-lg">
                     <div class="card-header p-3 d-flex justify-content-between align-items-center">
@@ -235,9 +235,18 @@
                     sound: false,
                     position: 'top right',
                 });
+            },
+            initializeScrollbar() {
+                const projectsList = this.$refs.projectsList;
+                if (projectsList) {
+                    new PerfectScrollbar(projectsList);
+                } else {
+                    console.error('Element projectsList nie został znaleziony');
+                }
             }
         },
         mounted() {
+            this.initializeScrollbar();
             // Symulacja opóźnienia ładowania
             setTimeout(() => {
                 this.loading = false; // Ustawienie na false po załadowaniu strony

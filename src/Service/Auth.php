@@ -30,13 +30,13 @@ class Auth
      * 
      * @return User|false Zalogowany użytkownik lub false w przypadku niepowodzenia
      */
-    public function login(string $username, string $password)
+    public function login(string $login, string $password)
     {
-        $username = AuthHelpers::sanitizeInput($username);
+        $login = AuthHelpers::sanitizeInput($login);
         $password = AuthHelpers::sanitizeInput($password);
 
         if (AuthHelpers::validatePassword($password)) {
-            $user = $this->userRepository->findByUsername($username);
+            $user = $this->userRepository->findByLogin($login);
 
             if ($user && password_verify($password, $user->getPassword())) {
                 $_SESSION['user_id'] = $user->getUserId();

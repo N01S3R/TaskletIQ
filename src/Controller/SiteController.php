@@ -9,9 +9,9 @@ class SiteController extends BaseController
     public function index()
     {
         // Sprawdzanie, czy użytkownik jest zalogowany
-        if (isset($_SESSION['user_id'])) {
+        if ($this->auth->getUserId()) {
             $userRepository = $this->getRepository(User::class);
-            $user = $userRepository->findLoggedInUserById($_SESSION['user_id']);
+            $user = $userRepository->findLoggedInUserById($this->auth->getUserId());
 
             if ($user) {
                 $role = $user->getRole();
@@ -42,7 +42,7 @@ class SiteController extends BaseController
 
     public function logout()
     {
-        $userId = $_SESSION['user_id'] ?? null;
+        $userId = $this->auth->getUserId() ?? null;
 
         if ($userId) {
             $userRepository = $this->getRepository(User::class);

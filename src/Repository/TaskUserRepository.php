@@ -97,4 +97,20 @@ class TaskUserRepository extends EntityRepository
 
         $qb->getQuery()->execute();
     }
+
+    /**
+     * Usuwa wszystkie przypisania użytkownika do zadań na podstawie jego identyfikatora.
+     *
+     * @param int $userId Identyfikator użytkownika, którego przypisania mają zostać usunięte.
+     * @return int Zwraca liczbę usuniętych przypisań.
+     */
+    public function removeUserAssignmentsByUserId(int $userId): void
+    {
+        $qb = $this->createQueryBuilder('tu')
+            ->delete()
+            ->where('tu.user = :userId')
+            ->setParameter('userId', $userId);
+
+        $qb->getQuery()->execute();
+    }
 }

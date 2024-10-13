@@ -50,22 +50,29 @@ class ProjectRepository extends EntityRepository
     }
 
     /**
-     * Zlicza projekty utworzone w danym miesiącu i roku.
+     * Zwraca zliczone ilości projektów utworzonych w każdym miesiącu bieżącego roku.
      *
-     * @param int $year
-     * @param int $month
-     * @return int
+     * @return array
      */
-    public function countProjectsByMonth(int $year, int $month): int
+    public function countProjectsPerMonthThisYear(): array
     {
-        $qb = $this->createQueryBuilder('p')
-            ->select('COUNT(p.id)')
-            ->where('YEAR(p.createdAt) = :year')
-            ->andWhere('MONTH(p.createdAt) = :month')
-            ->setParameter('year', $year)
-            ->setParameter('month', $month);
+        $currentYear = (new \DateTime())->format('Y');
 
-        return (int) $qb->getQuery()->getSingleScalarResult();
+        $projectsCountByMonth = array_fill(1, 12, 0);
+
+        $projects = $this->createQueryBuilder('p')
+            ->where('p.createdAt >= :startDate AND p.createdAt < :endDate')
+            ->setParameter('startDate', "$currentYear-01-01 00:00:00")
+            ->setParameter('endDate', "$currentYear-12-31 23:59:59")
+            ->getQuery()
+            ->getResult();
+
+        foreach ($projects as $project) {
+            $month = (int) $project->getCreatedAt()->format('m');
+            $projectsCountByMonth[$month]++;
+        }
+
+        return $projectsCountByMonth;
     }
 
     /**

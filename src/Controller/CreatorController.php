@@ -19,7 +19,7 @@ class CreatorController extends BaseController
      */
     public function displayDashboard(): void
     {
-        if ($this->auth->getUserId()) {
+        if ($this->checkRole('creator')) {
             $userId = $this->auth->getUserId();
             $taskRepository = $this->getRepository(Task::class);
 
@@ -45,7 +45,7 @@ class CreatorController extends BaseController
     public function displayDelegateForm(): void
     {
         // Sprawdzamy, czy użytkownik jest zalogowany
-        if ($this->auth->getUserId()) {
+        if ($this->checkRole('creator')) {
             // Pobieramy repozytorium użytkowników i projektów
             $userRepository = $this->getRepository(User::class);
             $projectRepository = $this->getRepository(Project::class);

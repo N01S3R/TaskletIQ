@@ -6,6 +6,7 @@ use App\View;
 use App\Entity\Task;
 use App\Entity\User;
 use App\Entity\Project;
+use App\Entity\TaskUser;
 
 class AdminController extends BaseController
 {
@@ -17,23 +18,23 @@ class AdminController extends BaseController
     public function displayDashboard(): void
     {
         // Sprawdzanie, czy użytkownik jest zalogowany
-        if (isset($_SESSION['user_id'])) {
+        if ($this->checkRole('admin')) {
             $userRepository = $this->getRepository(User::class);
             $user = $userRepository->findLoggedInUserById($_SESSION['user_id']);
 
             if ($user && $user->getRole() === 'admin') {
                 // Pobieranie danych do dashboardu
-                $userCount = $userRepository->countAllUsers();
-                $projectCount = $this->getRepository(Project::class)->countAllProjects();
-                $taskCount = $this->getRepository(Task::class)->countAllTasks();
-                // $projectsByMonth = $this->getRepository(Project::class)->findProjectsByMonth();
+                $userCount = count($userRepository->getAllUsers());
+                $projectCount = count($this->getRepository(Project::class)->getAllProjects());
+                $taskCount = count($this->getRepository(Task::class)->getAllTasks());
+                $projectsByMonth = $this->getRepository(Project::class)->countProjectsPerMonthThisYear();
 
                 $data = [
                     'pageTitle' => 'Panel administracyjny',
                     'users' => $userCount,
                     'projects' => $projectCount,
                     'tasks' => $taskCount,
-                    // 'projectsByMonth' => $projectsByMonth,
+                    'projectsByMonth' => $projectsByMonth,
                 ];
 
                 // Renderowanie widoku
@@ -55,7 +56,7 @@ class AdminController extends BaseController
      */
     public function reloadUsers(): void
     {
-        if (isset($_SESSION['user_id'])) {
+        if ($this->checkRole('admin')) {
             $userRepository = $this->getRepository(User::class);
             $users = $userRepository->findAllOrderedByRegistrationDate();
 
@@ -80,9 +81,9 @@ class AdminController extends BaseController
      */
     public function manageUsers(): void
     {
-        if (isset($_SESSION['user_id'])) {
+        if ($this->checkRole('admin')) {
             $userRepository = $this->getRepository(User::class);
-            $users = $userRepository->findAllOrderedByRegistrationDate();
+            $users = $userRepository->getAllUsers();
 
             $data = [
                 'pageTitle' => 'Zarządzanie użytkownikami',
@@ -103,7 +104,7 @@ class AdminController extends BaseController
      */
     public function siteSettings(): void
     {
-        if (isset($_SESSION['user_id'])) {
+        if ($this->checkRole('admin')) {
             $userRepository = $this->getRepository(User::class);
             $users = $userRepository->findAllOrderedByRegistrationDate();
 
@@ -127,7 +128,7 @@ class AdminController extends BaseController
      */
     public function updateUser(array $data): void
     {
-        if (isset($_SESSION['user_id'])) {
+        if ($this->checkRole('admin')) {
             $userId = $data['user_id'] ?? null;
             $name = $data['user_name'] ?? null;
             $email = $data['user_email'] ?? null;
@@ -176,21 +177,29 @@ class AdminController extends BaseController
      */
     public function deleteUser(int $userId): void
     {
-        if (isset($_SESSION['user_id'])) {
-            $taskRepository = $this->getRepository(Task::class);
+        if ($this->checkRole('admin')) {
+            $taskUserRepository = $this->getRepository(TaskUser::class);
             $userRepository = $this->getRepository(User::class);
 
-            $taskRepository->removeUserAssignmentsByUserId($userId);
-            $userRepository->deleteUser($userId);
+            $taskUserRepository->removeUserAssignmentsByUserId($userId);
 
-            $response = [
-                'success' => true,
-                'message' => 'Użytkownik został usunięty.'
-            ];
+            $user = $userRepository->find($userId);
+            if (!$user) {
+                $userRepository->delete($user);
+                $response = [
+                    'success' => true,
+                    'message' => 'Użytkownik został usunięty.'
+                ];
+            } else {
+                $response = [
+                    'status' => false,
+                    'message' => 'Użytkownik nie istnieje.'
+                ];
+            }
             echo json_encode($response);
         } else {
             $response = [
-                'status' => 'error',
+                'status' => false,
                 'message' => 'Nie masz uprawnień'
             ];
             echo json_encode($response);

@@ -11,6 +11,16 @@ use Doctrine\ORM\EntityNotFoundException;
 class TaskRepository extends EntityRepository
 {
     /**
+     * Zwraca wszystkie zadania w postaci tablicy.
+     *
+     * @return Task[] Tablica zawierająca wszystkie zadania.
+     */
+    public function getAllTasks(): array
+    {
+        return $this->findAll();
+    }
+
+    /**
      * Zwraca wszystkie zadania przypisane do zalogowanego użytkownika.
      *
      * @param int $userId Identyfikator zalogowanego użytkownika.
@@ -36,8 +46,7 @@ class TaskRepository extends EntityRepository
     {
         return $this->createQueryBuilder('t')
             ->where('t.taskId = :taskId')
-            ->innerJoin('t.users', 'u')
-            ->andWhere('u.userId = :userId')
+            ->andWhere('t.userId = :userId')
             ->setParameter('taskId', $taskId)
             ->setParameter('userId', $userId)
             ->getQuery()
@@ -146,11 +155,6 @@ class TaskRepository extends EntityRepository
     public function addTask(int $projectId, string $title, string $description, ?string $descriptionLong, int $userId): ?Task
     {
         $project = $this->getEntityManager()->getRepository(Project::class)->find($projectId);
-        $user = $this->getEntityManager()->getRepository(User::class)->find($userId);
-
-        if (!$project || !$user) {
-            throw new EntityNotFoundException("Projekt lub użytkownik nie znaleziony.");
-        }
 
         $task = new Task();
         $task->setTaskName($title);
@@ -159,7 +163,7 @@ class TaskRepository extends EntityRepository
         $task->setTaskProgress(0);
         $task->setTaskStatus("Nowy");
         $task->setProject($project);
-        $task->setUser($user);
+        $task->setUserId($userId);
         $task->setTaskCreatedAt(new \DateTime());
 
         $this->_em->persist($task);

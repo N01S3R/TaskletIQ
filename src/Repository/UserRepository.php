@@ -12,14 +12,41 @@ use Doctrine\Common\Collections\ArrayCollection;
 class UserRepository extends EntityRepository
 {
     /**
-     * Znajduje użytkownika po nazwie użytkownika.
+     * Zwraca wszystkich użytkowników w formacie tablicy asocjacyjnej.
      *
-     * @param string $username
+     * @return array Tablica użytkowników.
+     */
+    public function getAllUsers(): array
+    {
+        $users = $this->findAll();
+        $userArray = [];
+
+        // Konwersja obiektów User na tablicę
+        foreach ($users as $user) {
+            $userArray[] = [
+                'userId' => $user->getUserId(),
+                'login' => $user->getLogin(),
+                'username' => $user->getUsername(),
+                'email' => $user->getEmail(),
+                'avatar' => $user->getAvatar(),
+                'registrationDate' => $user->getRegistrationDate()->format('Y-m-d H:i:s'),
+                'logged' => $user->isLogged(),
+                'role' => $user->getRole(),
+            ];
+        }
+
+        return $userArray;
+    }
+
+    /**
+     * Znajduje użytkownika po loginie.
+     *
+     * @param string $login
      * @return User|null
      */
-    public function findByUsername(string $username): ?User
+    public function findByLogin(string $login): ?User
     {
-        return $this->findOneBy(['username' => $username]);
+        return $this->findOneBy(['login' => $login]);
     }
 
     /**
