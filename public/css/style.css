@@ -274,23 +274,3 @@ ul {
 }
 /* Admin Users */
 
-/* Sprawia, że tbody jest przewijane */
-.table-responsive tbody {
-  display: block;
-  max-height: 60vh;
-  overflow-y: auto;
-}
-
-/* Utrzymuje odpowiedni wygląd tabeli */
-.table-responsive thead, .table-responsive tbody tr {
-  display: table;
-  width: 100%;
-  table-layout: fixed;
-}
-
-/* Ustawienie nagłówka jako sticky */
-.sticky-top {
-  position: sticky;
-  top: 0;
-  z-index: 1;
-}

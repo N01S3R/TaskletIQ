@@ -48,6 +48,9 @@ $apiRoutes = [
         'POST' => 'AdminController@allUsers',
         'GET' => 'AdminController@reloadUsers'
     ],
+    '/api/user/add' => [
+        'POST' => 'AdminController@addUser'
+    ],
     '/api/user/update/(\d+)' => [
         'PUT' => 'AdminController@updateUser'
     ],

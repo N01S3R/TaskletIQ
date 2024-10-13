@@ -15,7 +15,8 @@
         "doctrine/dbal": "^3.2",
         "symfony/yaml": "^5.4",
         "symfony/cache": "^5.4",
-        "doctrine/annotations": "^2.0"
+        "doctrine/annotations": "^2.0",
+        "phpmailer/phpmailer": "^6.9"
     },
     "autoload": {
         "psr-4": {

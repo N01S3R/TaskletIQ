@@ -6,6 +6,7 @@ use App\Entity\Task;
 use App\Entity\User;
 use App\Entity\Project;
 use Doctrine\ORM\EntityRepository;
+use App\Config\Mailer;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\Common\Collections\ArrayCollection;
 
@@ -259,5 +260,58 @@ class UserRepository extends EntityRepository
             ->setParameter('userId', $userId)
             ->getQuery()
             ->getSingleScalarResult();
+    }
+
+    /**
+     * Dodaje nowego użytkownika do bazy danych i wysyła e-mail z hasłem.
+     *
+     * @param string $name
+     * @param string $email
+     * @param string $username
+     * @param string $avatar
+     * @param string $role
+     * @return User|null
+     */
+    public function createUser(string $name, string $email, string $username, string $avatar, string $role): ?User
+    {
+        // Sprawdzanie, czy użytkownik o podanym emailu lub loginie już istnieje
+        if ($this->findByEmail($email) || $this->findByLogin($username)) {
+            return null; // Użytkownik już istnieje
+        }
+
+        // Tworzenie nowego użytkownika
+        $user = new User();
+        $user->setUsername($name);
+        $user->setEmail($email);
+        $user->setLogin($username);
+
+        // Generowanie losowego hasła
+        $password = $this->generateRandomPassword(10);
+        $user->setPassword(password_hash($password, PASSWORD_BCRYPT));
+        $user->setLogged(0);
+        $user->setAvatar($avatar);
+        $user->setRole($role);
+        $user->setRegistrationDate(new \DateTime());
+
+        // Zapisanie użytkownika w bazie danych
+        $this->_em->persist($user);
+        $this->_em->flush();
+
+        // Wysyłanie e-maila z hasłem
+        $mailer = new Mailer();
+        $mailer->sendPasswordEmail($email, $password);
+
+        return $user;
+    }
+
+    /**
+     * Generuje losowe hasło.
+     *
+     * @param int $length
+     * @return string
+     */
+    private function generateRandomPassword(int $length = 10): string
+    {
+        return bin2hex(random_bytes($length / 2)); // Wygeneruje hasło o podanej długości
     }
 }

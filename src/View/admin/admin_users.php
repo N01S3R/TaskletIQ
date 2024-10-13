@@ -16,39 +16,42 @@
         </header>
 
         <!-- Tabela użytkowników -->
-        <div class="table-responsive">
+        <div class="table-responsive" id="scrollableTable">
             <table id="userTable" class="table table-striped table-bordered admin-user-table mb-0">
-                <thead class="table-light sticky-top">
+                <thead class="table-dark sticky-top">
                     <tr>
                         <th>ID</th>
                         <th>Avatar</th>
                         <th>Nazwa</th>
-                        <th>Email</th>
+                        <th>Adres email</th>
                         <th>Login</th>
                         <th>Rejestracja</th>
                         <th>Logged In</th>
-                        <th>Role</th>
-                        <th>Actions</th>
+                        <th>Rola</th>
+                        <th>Akcje</th>
                     </tr>
                 </thead>
                 <tbody>
                     <tr v-for="user in users" :key="user.userId">
-                        <td class="text-center align-middle">{{ user.userId }}</td>
+                        <td class="text-center align-middle id-column">{{ user.userId }}</td>
                         <td class="text-center align-middle">
                             <div class="d-flex justify-content-center">
-                                <img :src="'/images/' + user.avatar" alt="avatar" width="50">
+                                <img :src="'/images/' + user.avatar" alt="avatar" width="40">
                             </div>
                         </td>
                         <td class="text-center align-middle">{{ user.username }}</td>
                         <td class="text-center align-middle">{{ user.email }}</td>
                         <td class="text-center align-middle">{{ user.login }}</td>
-                        <td class="text-center align-middle">{{ user.registrationDate }}</td>
-                        <td class="text-center align-middle">{{ user.logged ? 'Yes' : 'No' }}</td>
+                        <td class="text-center align-middle small">{{ user.registrationDate }}</td>
+                        <td class="text-center align-middle">
+                            <span v-if="user.logged" class="badge text-bg-success">Online</span>
+                            <span v-else class="badge text-bg-danger">Offline</span>
+                        </td>
                         <td class="text-center align-middle">{{ user.role }}</td>
                         <td class="text-center align-middle">
                             <div class="d-flex justify-content-center">
-                                <button @click="openEditUserModal(user)" class="btn btn-primary btn-sm me-1">Edit</button>
-                                <button @click="openDeleteUserModal(user.userId)" class="btn btn-danger btn-sm">Delete</button>
+                                <button @click="openEditUserModal(user)" class="btn btn-primary btn-sm me-1">Edytuj</button>
+                                <button @click="openDeleteUserModal(user.userId)" class="btn btn-danger btn-sm">Usuń</button>
                             </div>
                         </td>
                     </tr>
@@ -56,29 +59,44 @@
             </table>
         </div>
 
+
         <!-- Modal for Adding User -->
         <div class="modal fade" id="addUserModal" tabindex="-1" aria-labelledby="addUserModalLabel" aria-hidden="true">
             <div class="modal-dialog">
                 <div class="modal-content">
                     <div class="modal-header">
-                        <h5 class="modal-title" id="addUserModalLabel">Add User</h5>
+                        <h5 class="modal-title" id="addUserModalLabel">Dodaj Użytkownika</h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     <div class="modal-body">
                         <form @submit.prevent="addUser">
                             <div class="mb-3">
-                                <label for="name" class="form-label">Name</label>
+                                <label for="name" class="form-label">Imię</label>
                                 <input type="text" class="form-control" id="name" v-model="newUser.name" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="username" class="form-label">Nazwa Użytkownika</label>
+                                <input type="text" class="form-control" id="username" v-model="newUser.username" required>
                             </div>
                             <div class="mb-3">
                                 <label for="email" class="form-label">Email</label>
                                 <input type="email" class="form-control" id="email" v-model="newUser.email" required>
                             </div>
                             <div class="mb-3">
-                                <label for="username" class="form-label">Username</label>
-                                <input type="text" class="form-control" id="username" v-model="newUser.username" required>
+                                <label for="role" class="form-label">Rola</label>
+                                <select class="form-control" id="role" v-model="newUser.role">
+                                    <option value="operator">Wykonawca</option>
+                                    <option value="admin">Administrator</option>
+                                    <option value="creator">Twórca</option>
+                                </select>
                             </div>
-                            <button type="submit" class="btn btn-primary">Add</button>
+                            <div class="mb-3">
+                                <label for="avatar" class="form-label">Avatar</label>
+                                <div class="text-center">
+                                    <img :src="`/images/${newUser.role}.png`" alt="Avatar" width="100" v-if="newUser.role" />
+                                </div>
+                            </div>
+                            <button type="submit" class="btn btn-primary">Dodaj</button>
                         </form>
                     </div>
                 </div>
@@ -90,14 +108,14 @@
             <div class="modal-dialog">
                 <div class="modal-content">
                     <div class="modal-header">
-                        <h5 class="modal-title" id="editUserModalLabel">Edit User</h5>
+                        <h5 class="modal-title" id="editUserModalLabel">Edytuj Użytkownika</h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     <div class="modal-body">
                         <form @submit.prevent="updateUser">
                             <input type="hidden" v-model="editUser.userId">
                             <div class="mb-3">
-                                <label for="editName" class="form-label">Name</label>
+                                <label for="editName" class="form-label">Imię</label>
                                 <input type="text" class="form-control" id="editName" v-model="editUser.username" required>
                             </div>
                             <div class="mb-3">
@@ -105,10 +123,24 @@
                                 <input type="email" class="form-control" id="editEmail" v-model="editUser.email" required>
                             </div>
                             <div class="mb-3">
-                                <label for="editUsername" class="form-label">Username</label>
+                                <label for="editUsername" class="form-label">Nazwa Użytkownika</label>
                                 <input type="text" class="form-control" id="editUsername" v-model="editUser.login" required>
                             </div>
-                            <button type="submit" class="btn btn-primary">Save Changes</button>
+                            <div class="mb-3">
+                                <label for="editRole" class="form-label">Rola</label>
+                                <select class="form-control" id="editRole" v-model="editUser.role">
+                                    <option value="creator">Twórca</option>
+                                    <option value="operator">Wykonawca</option>
+                                    <option value="admin">Administrator</option>
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label for="avatar" class="form-label">Avatar</label>
+                                <div class="text-center">
+                                    <img :src="`/images/${editUser.role}.png`" alt="Avatar" width="100" v-if="editUser.role" />
+                                </div>
+                            </div>
+                            <button type="submit" class="btn btn-primary">Zapisz Zmiany</button>
                         </form>
                     </div>
                 </div>
@@ -120,14 +152,14 @@
             <div class="modal-dialog">
                 <div class="modal-content">
                     <div class="modal-header">
-                        <h5 class="modal-title" id="deleteUserModalLabel">Delete User</h5>
+                        <h5 class="modal-title" id="deleteUserModalLabel">Usuń Użytkownika</h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     <div class="modal-body">
-                        <p>Are you sure you want to delete this user?</p>
+                        <p>Czy na pewno chcesz usunąć tego użytkownika?</p>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Anuluj</button>
                         <button type="button" class="btn btn-danger" data-bs-dismiss="modal" @click="deleteUserAction">Usuń</button>
                     </div>
                 </div>
@@ -161,11 +193,9 @@
                     name: '',
                     email: '',
                     username: '',
-                    password: '',
-                    avatar: '',
-                    registrationDate: '',
+                    avatar: 'operator.png',
                     logged: false,
-                    role: ''
+                    role: 'operator'
                 },
                 editUser: {
                     userId: '',
@@ -173,7 +203,6 @@
                     email: '',
                     login: '',
                     avatar: '',
-                    registrationDate: '',
                     logged: false,
                     role: ''
                 },
@@ -186,7 +215,11 @@
         },
         mounted() {
             this.initializeDataTable();
-
+            const ps = new PerfectScrollbar('#scrollableTable', {
+                wheelSpeed: 2,
+                wheelPropagation: true,
+                minScrollbarLength: 20,
+            });
             setTimeout(() => {
                 this.loading = false;
             }, 3000);
@@ -199,19 +232,33 @@
                 $('#addUserModal').modal('show');
             },
             addUser() {
-                axios.post('/api/users/add', this.newUser)
+                const userData = {
+                    user_name: this.newUser.name,
+                    user_email: this.newUser.email,
+                    user_login: this.newUser.username,
+                    user_avatar: this.newUser.avatar,
+                    user_role: this.newUser.role
+                };
+
+                axios.post('/api/user/add', userData)
                     .then(response => {
-                        this.users.push(response.data);
-                        $('#addUserModal').modal('hide');
-                        this.newUser = {
-                            name: '',
-                            email: '',
-                            username: '',
-                            password: ''
-                        };
+                        if (response.data.status === 'success') {
+                            this.users.push(response.data.data);
+                            $('#addUserModal').modal('hide');
+                            this.newUser = {
+                                name: '',
+                                email: '',
+                                username: '',
+                                avatar: '',
+                                role: 'operator'
+                            };
+                            this.showNotification('success', response.data.message);
+                        } else {
+                            this.showNotification('error', response.data.message);
+                        }
                     })
                     .catch(error => {
-                        console.error('Błąd podczas dodawania użytkownika', error);
+                        this.showNotification('error', 'Wystąpił błąd podczas dodawania użytkownika.');
                     });
             },
             openEditUserModal(user) {
@@ -220,6 +267,8 @@
                     username: user.username,
                     email: user.email,
                     login: user.login,
+                    avatar: user.avatar,
+                    role: user.role
                 };
                 $('#editUserModal').modal('show');
             },
@@ -252,7 +301,6 @@
                                 this.showNotification('success', data.message);
                             } else {
                                 this.showNotification('error', data.message);
-
                             }
                         })
                         .catch(error => {

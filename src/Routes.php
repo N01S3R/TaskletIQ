@@ -41,14 +41,22 @@ class Routes
                             $params = array_slice($matches, 1);
                             $params = self::processParameters($params);
 
+                            // Obsługa danych JSON dla POST
+                            if ($requestMethod === 'POST') {
+                                $input = json_decode(file_get_contents('php://input'), true);
+                                if (is_array($input)) {
+                                    $params[] = $input;
+                                } else {
+                                    $params[] = $_POST;
+                                }
+                            }
+
+                            // Obsługa GET
                             if ($requestMethod === 'GET') {
                                 $params[] = $_GET;
                             }
 
-                            if ($requestMethod === 'POST') {
-                                $params[] = $_POST;
-                            }
-
+                            // Obsługa PUT i DELETE
                             if (in_array($requestMethod, ['PUT', 'DELETE'])) {
                                 $input = file_get_contents('php://input');
                                 parse_str($input, $putDeleteParams);

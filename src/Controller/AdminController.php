@@ -184,7 +184,7 @@ class AdminController extends BaseController
             $taskUserRepository->removeUserAssignmentsByUserId($userId);
 
             $user = $userRepository->find($userId);
-            if (!$user) {
+            if ($user) {
                 $userRepository->delete($user);
                 $response = [
                     'success' => true,
@@ -201,6 +201,63 @@ class AdminController extends BaseController
             $response = [
                 'status' => false,
                 'message' => 'Nie masz uprawnień'
+            ];
+            echo json_encode($response);
+        }
+    }
+
+    /**
+     * Dodaje nowego użytkownika.
+     *
+     * @param array $data
+     * @return void
+     */
+    public function addUser(array $data): void
+    {
+        if ($this->checkRole('admin')) {
+            // Zbieranie danych z formularza
+            $name = $data['user_name'];
+            $email = $data['user_email'];
+            $login = $data['user_login'];
+            $avatar = $data['user_avatar'];
+            $role = $data['user_role'];
+
+            if ($name && $email && $login) {
+                $userRepository = $this->getRepository(User::class);
+                $user = $userRepository->createUser($name, $email, $login, $avatar, $role);
+
+                if ($user) {
+                    $response = [
+                        'status' => 'success',
+                        'message' => 'Użytkownik został dodany pomyślnie.',
+                        'data' => [
+                            'userId' => $user->getUserId(),
+                            'username' => $user->getUsername(),
+                            'login' => $user->getLogin(),
+                            'email' => $user->getEmail(),
+                            'avatar' => $user->getAvatar(),
+                            'role' => $user->getRole(),
+                            'logged' => $user->isLogged(),
+                            'registrationDate' => $user->getRegistrationDate()->format('Y-m-d H:i:s')
+                        ]
+                    ];
+                } else {
+                    $response = [
+                        'status' => 'error',
+                        'message' => 'Użytkownik o podanym emailu lub loginie już istnieje.'
+                    ];
+                }
+            } else {
+                $response = [
+                    'status' => 'error',
+                    'message' => 'Niepoprawne dane.'
+                ];
+            }
+            echo json_encode($response);
+        } else {
+            $response = [
+                'status' => 'error',
+                'message' => 'Nie masz uprawnień.'
             ];
             echo json_encode($response);
         }
