@@ -272,7 +272,7 @@ class UserRepository extends EntityRepository
      * @param string $role
      * @return User|null
      */
-    public function createUser(string $name, string $email, string $username, string $avatar, string $role): ?User
+    public function createUser(string $name, string $email, string $username, string $avatar, string $role, string $registrationCode): ?User
     {
         // Sprawdzanie, czy użytkownik o podanym emailu lub loginie już istnieje
         if ($this->findByEmail($email) || $this->findByLogin($username)) {
@@ -289,6 +289,7 @@ class UserRepository extends EntityRepository
         $password = $this->generateRandomPassword(10);
         $user->setPassword(password_hash($password, PASSWORD_BCRYPT));
         $user->setLogged(0);
+        $user->setRegistrationToken($registrationCode);
         $user->setAvatar($avatar);
         $user->setRole($role);
         $user->setRegistrationDate(new \DateTime());
@@ -313,5 +314,47 @@ class UserRepository extends EntityRepository
     private function generateRandomPassword(int $length = 10): string
     {
         return bin2hex(random_bytes($length / 2)); // Wygeneruje hasło o podanej długości
+    }
+
+    /**
+     * Aktualizuje dane użytkownika w bazie danych.
+     *
+     * @param int $userId
+     * @param string|null $username
+     * @param string|null $email
+     * @param string|null $login
+     * @param string|null $avatar
+     * @param string|null $role
+     * @return bool
+     */
+    public function updateUser(int $userId, ?string $username, ?string $email, ?string $login, ?string $avatar, ?string $role): bool
+    {
+        $user = $this->find($userId); // Znajdujemy użytkownika po ID
+
+        if (!$user) {
+            return false; // Jeśli użytkownik nie istnieje, zwracamy false
+        }
+
+        // Aktualizujemy dane użytkownika tylko wtedy, gdy nowe wartości są różne
+        if ($username !== null) {
+            $user->setUsername($username);
+        }
+        if ($email !== null) {
+            $user->setEmail($email);
+        }
+        if ($login !== null) {
+            $user->setLogin($login);
+        }
+        if ($avatar !== null) {
+            $user->setAvatar($avatar);
+        }
+        if ($role !== null) {
+            $user->setRole($role);
+        }
+
+        // Zapisujemy zmiany w bazie danych
+        $this->_em->flush();
+
+        return true; // Zwracamy true, jeśli aktualizacja powiodła się
     }
 }

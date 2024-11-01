@@ -56,6 +56,11 @@ class Task
     private $project;
 
     /**
+     * @ORM\OneToMany(targetEntity="App\Entity\TaskUser", mappedBy="task", cascade={"persist", "remove"}, orphanRemoval=true)
+     */
+    private $taskUsers;
+
+    /**
      * @ORM\Column(type="integer", name="user_id", nullable=true)
      */
     private $userId;
@@ -72,6 +77,7 @@ class Task
     public function __construct()
     {
         $this->users = new ArrayCollection();
+        $this->taskUsers = new ArrayCollection();
     }
 
     // Getters and Setters

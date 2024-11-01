@@ -4,6 +4,9 @@ namespace App\Controller;
 
 use App\View;
 use PDOException;
+use App\Entity\User;
+use App\Entity\Project;
+use App\Entity\TaskUser;
 
 /**
  * Kontroler odpowiedzialny za operacje operatora.
@@ -18,11 +21,12 @@ class OperatorController extends BaseController
     public function displayDashboard(): void
     {
         if ($this->checkRole('operator')) {
-            $userId = $this->userModel->getLoggedInUserId();
+            $taskUserRepository = $this->getRepository(TaskUser::class);
+            $userId = $this->auth->getUserId();
 
             $data = [
                 'pageTitle' => 'Dashboard',
-                'projectsName' => $this->operatorModel->getProjectsByUserId($userId),
+                'projectsName' => $taskUserRepository->getProjectsAndTasksByUser($userId),
             ];
 
             $this->view->render('operator/operator_dashboard', $data);

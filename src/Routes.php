@@ -59,8 +59,10 @@ class Routes
                             // Obsługa PUT i DELETE
                             if (in_array($requestMethod, ['PUT', 'DELETE'])) {
                                 $input = file_get_contents('php://input');
-                                parse_str($input, $putDeleteParams);
-                                $params[] = $putDeleteParams;
+                                $putDeleteParams = json_decode($input, true); // Dekodujemy dane JSON
+
+                                // Dodaj dane użytkownika do $params
+                                $params[] = $putDeleteParams; // Dodajemy jako ostatni element
                             }
 
                             call_user_func_array([$controller, $methodName], $params);

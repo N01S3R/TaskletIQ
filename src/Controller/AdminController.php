@@ -44,7 +44,7 @@ class AdminController extends BaseController
                 exit();
             }
         } else {
-            header('Location: /login');
+            header('Location: /logout');
             exit();
         }
     }
@@ -56,9 +56,10 @@ class AdminController extends BaseController
      */
     public function reloadUsers(): void
     {
+        header('Content-Type: application/json');
         if ($this->checkRole('admin')) {
             $userRepository = $this->getRepository(User::class);
-            $users = $userRepository->findAllOrderedByRegistrationDate();
+            $users = $userRepository->getAllUsers();
 
             $response = [
                 'status' => 'success',
@@ -82,12 +83,9 @@ class AdminController extends BaseController
     public function manageUsers(): void
     {
         if ($this->checkRole('admin')) {
-            $userRepository = $this->getRepository(User::class);
-            $users = $userRepository->getAllUsers();
 
             $data = [
                 'pageTitle' => 'Zarządzanie użytkownikami',
-                'users' => $users,
             ];
 
             View::render('admin/admin_users', $data);
@@ -123,43 +121,36 @@ class AdminController extends BaseController
     /**
      * Aktualizuje dane użytkownika.
      *
+     * @param int $userId
      * @param array $data
      * @return void
      */
-    public function updateUser(array $data): void
+    public function updateUser(int $userId, array $data): void
     {
         if ($this->checkRole('admin')) {
-            $userId = $data['user_id'] ?? null;
-            $name = $data['user_name'] ?? null;
-            $email = $data['user_email'] ?? null;
-            $username = $data['user_login'] ?? null;
+            $username = $data['username'];
+            $email = $data['email'];
+            $login = $data['login'];
+            $avatar = $data['avatar'];
+            $role = $data['role'];
 
-            if ($userId) {
-                $userRepository = $this->getRepository(User::class);
-                $success = $userRepository->updateUser((int) $userId, $name, $email, $username);
+            $userRepository = $this->getRepository(User::class);
+            $success = $userRepository->updateUser($userId, $username, $email, $login, $avatar, $role);
 
-                if ($success) {
-                    $updatedUser = $userRepository->find($userId);
-
-                    $response = [
-                        'status' => 'success',
-                        'message' => 'Dane zostały zaktualizowane',
-                        'data' => $updatedUser
-                    ];
-                } else {
-                    $response = [
-                        'status' => 'error',
-                        'message' => 'Błąd podczas aktualizacji danych'
-                    ];
-                }
-                echo json_encode($response);
+            if ($success) {
+                $updatedUser = $userRepository->find($userId);
+                $response = [
+                    'status' => 'success',
+                    'message' => 'Dane zostały zaktualizowane',
+                    'data' => $updatedUser
+                ];
             } else {
                 $response = [
                     'status' => 'error',
-                    'message' => 'Niepoprawne dane'
+                    'message' => 'Błąd podczas aktualizacji danych'
                 ];
-                echo json_encode($response);
             }
+            echo json_encode($response);
         } else {
             $response = [
                 'status' => 'error',
@@ -224,7 +215,8 @@ class AdminController extends BaseController
 
             if ($name && $email && $login) {
                 $userRepository = $this->getRepository(User::class);
-                $user = $userRepository->createUser($name, $email, $login, $avatar, $role);
+                $registrationCode = $this->generateRegistrationCode($name);
+                $user = $userRepository->createUser($name, $email, $login, $avatar, $role, $registrationCode);
 
                 if ($user) {
                     $response = [
@@ -261,5 +253,18 @@ class AdminController extends BaseController
             ];
             echo json_encode($response);
         }
+    }
+
+    /**
+     * Generuje unikalny kod rejestracyjny na podstawie nazwy użytkownika.
+     * 
+     * @param string $username Nazwa użytkownika
+     * 
+     * @return string Kod rejestracyjny
+     */
+    private function generateRegistrationCode(string $username): string
+    {
+        $data = $username . microtime(true) * 1000;
+        return md5($data);
     }
 }

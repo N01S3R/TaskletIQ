@@ -272,5 +272,61 @@ ul {
   background-color: #e9ecef; /* Kolor tła po najechaniu */
   transform: scale(1.05); /* Powiększa plusa po najechaniu */
 }
+/* Operator Dashboard */
+.project-card {
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.project-card:hover {
+    transform: scale(1.05);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+}
+
+.card-header {
+    position: relative;
+}
+
+.card-header h2 {
+    margin: 0;
+    font-size: 1.5rem;
+}
+
+.task-status {
+    margin-top: 10px;
+}
+
+.task-status div {
+    margin: 5px 0;
+    font-size: 1.1rem;
+}
+.card-header {
+  position: relative;
+  padding: 15px; /* Większe odstępy w nagłówku */
+}
+
+.statistic-item {
+  margin-bottom: 10px; /* Odstęp między statystykami */
+}
+
+.statistic-item p {
+  font-size: 1rem; /* Umiarkowany rozmiar czcionki */
+  margin: 0; /* Brak marginesów dla akapitu */
+}
+
+.text-info {
+  color: #17a2b8; /* Kolor dla informacji */
+  font-weight: bold; /* Pogrubienie dla lepszej widoczności */
+}
+
+.text-warning {
+  color: #ffc107; /* Kolor dla zadań do wykonania */
+  font-weight: bold; /* Pogrubienie */
+}
+
+.text-success {
+  color: #28a745; /* Kolor dla ukończonych zadań */
+  font-weight: bold; /* Pogrubienie */
+}
+
 /* Admin Users */
 

@@ -31,38 +31,13 @@
                         <th>Akcje</th>
                     </tr>
                 </thead>
-                <tbody>
-                    <tr v-for="user in users" :key="user.userId">
-                        <td class="text-center align-middle id-column">{{ user.userId }}</td>
-                        <td class="text-center align-middle">
-                            <div class="d-flex justify-content-center">
-                                <img :src="'/images/' + user.avatar" alt="avatar" width="40">
-                            </div>
-                        </td>
-                        <td class="text-center align-middle">{{ user.username }}</td>
-                        <td class="text-center align-middle">{{ user.email }}</td>
-                        <td class="text-center align-middle">{{ user.login }}</td>
-                        <td class="text-center align-middle small">{{ user.registrationDate }}</td>
-                        <td class="text-center align-middle">
-                            <span v-if="user.logged" class="badge text-bg-success">Online</span>
-                            <span v-else class="badge text-bg-danger">Offline</span>
-                        </td>
-                        <td class="text-center align-middle">{{ user.role }}</td>
-                        <td class="text-center align-middle">
-                            <div class="d-flex justify-content-center">
-                                <button @click="openEditUserModal(user)" class="btn btn-primary btn-sm me-1">Edytuj</button>
-                                <button @click="openDeleteUserModal(user.userId)" class="btn btn-danger btn-sm">Usuń</button>
-                            </div>
-                        </td>
-                    </tr>
-                </tbody>
             </table>
         </div>
 
 
         <!-- Modal for Adding User -->
         <div class="modal fade" id="addUserModal" tabindex="-1" aria-labelledby="addUserModalLabel" aria-hidden="true">
-            <div class="modal-dialog">
+            <div class="modal-dialog modal-dialog-centered">
                 <div class="modal-content">
                     <div class="modal-header">
                         <h5 class="modal-title" id="addUserModalLabel">Dodaj Użytkownika</h5>
@@ -105,7 +80,7 @@
 
         <!-- Modal for Editing User -->
         <div class="modal fade" id="editUserModal" tabindex="-1" aria-labelledby="editUserModalLabel" aria-hidden="true">
-            <div class="modal-dialog">
+            <div class="modal-dialog modal-dialog-centered">
                 <div class="modal-content">
                     <div class="modal-header">
                         <h5 class="modal-title" id="editUserModalLabel">Edytuj Użytkownika</h5>
@@ -123,15 +98,15 @@
                                 <input type="email" class="form-control" id="editEmail" v-model="editUser.email" required>
                             </div>
                             <div class="mb-3">
-                                <label for="editUsername" class="form-label">Nazwa Użytkownika</label>
-                                <input type="text" class="form-control" id="editUsername" v-model="editUser.login" required>
+                                <label for="editLogin" class="form-label">Login</label>
+                                <input type="text" class="form-control" id="editLogin" v-model="editUser.login" required>
                             </div>
                             <div class="mb-3">
                                 <label for="editRole" class="form-label">Rola</label>
                                 <select class="form-control" id="editRole" v-model="editUser.role">
-                                    <option value="creator">Twórca</option>
                                     <option value="operator">Wykonawca</option>
                                     <option value="admin">Administrator</option>
+                                    <option value="creator">Twórca</option>
                                 </select>
                             </div>
                             <div class="mb-3">
@@ -140,7 +115,9 @@
                                     <img :src="`/images/${editUser.role}.png`" alt="Avatar" width="100" v-if="editUser.role" />
                                 </div>
                             </div>
-                            <button type="submit" class="btn btn-primary">Zapisz Zmiany</button>
+                            <div class="d-flex justify-content-end">
+                                <button type="submit" class="btn btn-primary">Zapisz Zmiany</button>
+                            </div>
                         </form>
                     </div>
                 </div>
@@ -149,14 +126,16 @@
 
         <!-- Modal for Deleting User -->
         <div class="modal fade" id="deleteUserModal" tabindex="-1" aria-labelledby="deleteUserModalLabel" aria-hidden="true">
-            <div class="modal-dialog">
+            <div class="modal-dialog modal-dialog-centered">
                 <div class="modal-content">
                     <div class="modal-header">
                         <h5 class="modal-title" id="deleteUserModalLabel">Usuń Użytkownika</h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     <div class="modal-body">
-                        <p>Czy na pewno chcesz usunąć tego użytkownika?</p>
+                        <div class="modal-body">
+                            <p>Czy na pewno chcesz usunąć użytkownika {{ userToDelete }}?</p>
+                        </div>
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Anuluj</button>
@@ -188,14 +167,14 @@
         data() {
             return {
                 pageTitle: "<?= htmlspecialchars($data['pageTitle']) ?>",
-                users: <?= json_encode($data['users']) ?>,
+                users: [],
+                userToDelete: '',
                 newUser: {
                     name: '',
                     email: '',
                     username: '',
-                    avatar: 'operator.png',
-                    logged: false,
-                    role: 'operator'
+                    avatar: '',
+                    role: ''
                 },
                 editUser: {
                     userId: '',
@@ -215,21 +194,117 @@
         },
         mounted() {
             this.initializeDataTable();
-            const ps = new PerfectScrollbar('#scrollableTable', {
-                wheelSpeed: 2,
-                wheelPropagation: true,
-                minScrollbarLength: 20,
-            });
+            this.fetchUsers();
+
             setTimeout(() => {
                 this.loading = false;
             }, 3000);
         },
+        watch: {
+            'newUser.role': function(newRole) {
+                this.updateAvatar(newRole);
+            },
+            'editUser.role': function(newRole) {
+                this.updateAvatar(newRole);
+            }
+        },
         methods: {
             initializeDataTable() {
-                this.dataTable = $('#userTable').DataTable({});
+                this.dataTable = $('#userTable').DataTable({
+                    drawCallback: () => {
+                        this.addEventListeners();
+                    }
+                });
+            },
+            fetchUsers() {
+                axios.get('/api/users')
+                    .then(response => {
+                        if (response.data.status === 'success') {
+                            this.users = response.data.users;
+                            this.updateDataTable();
+                        } else {
+                            this.showNotification('error', response.data.message);
+                        }
+                    })
+                    .catch(error => {
+                        console.error(error);
+                        this.showNotification('error', 'Błąd przy pobieraniu danych użytkowników.');
+                    });
+            },
+            updateDataTable() {
+
+                const currentPage = this.dataTable.page();
+                this.dataTable.clear();
+
+                this.users.forEach(user => {
+                    const status = user.logged ?
+                        '<span class="badge text-bg-success">Online</span>' :
+                        '<span class="badge text-bg-danger">Offline</span>';
+
+                    let roleClass;
+                    switch (user.role) {
+                        case 'operator':
+                            roleClass = 'text-bg-primary';
+                            break;
+                        case 'creator':
+                            roleClass = 'text-bg-secondary';
+                            break;
+                        case 'admin':
+                            roleClass = 'text-bg-warning';
+                            break;
+                        default:
+                            roleClass = 'text-bg-dark';
+                    }
+
+                    this.dataTable.row.add([
+                        `<div class="text-center">${user.userId}</div>`,
+                        `<div class="text-center"><img src="/images/${user.avatar}" alt="Avatar" width="40"></div>`,
+                        `<div class="text-center align-middle">${user.username}</div>`,
+                        `<div class="text-center align-middle">${user.email}</div>`,
+                        `<div class="text-center align-middle">${user.login}</div>`,
+                        `<div class="text-center align-middle">${user.registrationDate}</div>`,
+                        `<div class="text-center align-middle">${status}</div>`,
+                        `<div class="text-center align-middle"><span class="badge ${roleClass}">${user.role}</span></div>`,
+                        `<div class="text-center align-middle">
+                        <div class="d-flex justify-content-center">
+                            <button class="btn btn-info btn-sm edit-user me-2" data-id="${user.userId}">Edytuj</button>
+                            <button class="btn btn-danger btn-sm delete-user" data-id="${user.userId}">Usuń</button>
+                        </div>
+                    </div>`
+                    ]);
+                });
+
+                this.dataTable.draw(false);
+                this.dataTable.page(currentPage).draw('page');
+                this.addEventListeners();
+            },
+            addEventListeners() {
+                const editButtons = document.querySelectorAll('.edit-user');
+                const deleteButtons = document.querySelectorAll('.delete-user');
+
+                editButtons.forEach(button => {
+                    button.addEventListener('click', (event) => {
+                        const userId = event.target.getAttribute('data-id');
+                        const user = this.users.find(u => u.userId == userId);
+                        this.openEditUserModal(user);
+                    });
+                });
+
+                deleteButtons.forEach(button => {
+                    button.addEventListener('click', (event) => {
+                        const userId = event.target.getAttribute('data-id');
+                        this.openDeleteUserModal(userId);
+                    });
+                });
             },
             openAddUserModal() {
                 $('#addUserModal').modal('show');
+            },
+            updateAvatar(role) {
+                this.newUser.avatar = `${role}.png`;
+                if (this.editUser.role) {
+                    this.editUser.avatar = `${role}.png`;
+                }
             },
             addUser() {
                 const userData = {
@@ -243,7 +318,6 @@
                 axios.post('/api/user/add', userData)
                     .then(response => {
                         if (response.data.status === 'success') {
-                            this.users.push(response.data.data);
                             $('#addUserModal').modal('hide');
                             this.newUser = {
                                 name: '',
@@ -252,6 +326,7 @@
                                 avatar: '',
                                 role: 'operator'
                             };
+                            this.fetchUsers();
                             this.showNotification('success', response.data.message);
                         } else {
                             this.showNotification('error', response.data.message);
@@ -270,23 +345,23 @@
                     avatar: user.avatar,
                     role: user.role
                 };
+                this.updateAvatar(user.role);
                 $('#editUserModal').modal('show');
             },
             updateUser() {
                 axios.put(`/api/user/update/${this.editUser.userId}`, this.editUser)
                     .then(response => {
                         const updatedUser = response.data.data;
-                        const index = this.users.findIndex(u => u.userId === this.editUser.userId);
-                        if (index !== -1) {
-                            this.$set(this.users, index, updatedUser);
-                            $('#editUserModal').modal('hide');
-                        }
+                        this.fetchUsers();
+                        $('#editUserModal').modal('hide');
                     })
                     .catch(error => {
                         this.showNotification('error', 'Błąd edycji użytkownika');
                     });
             },
             openDeleteUserModal(userId) {
+                const user = this.users.find(u => u.userId == userId);
+                this.userToDelete = user ? user.username : '';
                 this.deleteUser = userId;
                 $('#deleteUserModal').modal('show');
             },
@@ -296,7 +371,7 @@
                         .then(response => {
                             const data = response.data;
                             if (data.success) {
-                                this.users = this.users.filter(u => u.userId !== this.deleteUser);
+                                this.fetchUsers();
                                 $('#deleteUserModal').modal('hide');
                                 this.showNotification('success', data.message);
                             } else {
@@ -316,7 +391,7 @@
                     sound: false,
                     position: 'top right',
                 });
-            },
+            }
         }
     }).mount('#app');
 </script>

@@ -113,4 +113,71 @@ class TaskUserRepository extends EntityRepository
 
         $qb->getQuery()->execute();
     }
+
+    /**
+     * Pobiera projekty i zadania przypisane do danego użytkownika przez tabelę `tasks_users`.
+     *
+     * @param int $userId Identyfikator użytkownika, dla którego mają być pobrane projekty i zadania.
+     * @return array Zwraca tablicę projektów z przypisanymi zadaniami.
+     */
+    public function getProjectsAndTasksByUser(int $userId): array
+    {
+        $qb = $this->createQueryBuilder('tu')
+            ->select(
+                'p.projectId AS project_id',
+                'p.projectName AS project_name',
+                't.taskId AS task_id',
+                't.taskName AS task_name',
+                't.taskDescription AS task_description',
+                't.taskProgress AS task_progress'
+            )
+            ->innerJoin('tu.task', 't')
+            ->innerJoin('t.project', 'p')
+            ->where('tu.user = :userId')
+            ->setParameter('userId', $userId);
+
+        $results = $qb->getQuery()->getArrayResult();
+
+        $groupedProjects = [];
+
+        // Grupowanie wyników według projektów
+        foreach ($results as $row) {
+            $projectId = $row['project_id'];
+
+            if (!isset($groupedProjects[$projectId])) {
+                $groupedProjects[$projectId] = [
+                    'project_id' => $row['project_id'],
+                    'project_name' => $row['project_name'],
+                    'task_count' => 0,
+                    'remaining_task_count' => 0,
+                    'inprogress_task_count' => 0,
+                    'completed_task_count' => 0,
+                    'tasks' => []
+                ];
+            }
+
+            // Dodajemy zadanie do odpowiedniego projektu
+            if ($row['task_id'] !== null) {
+                $groupedProjects[$projectId]['tasks'][] = [
+                    'task_id' => $row['task_id'],
+                    'task_name' => $row['task_name'],
+                    'task_progress' => $row['task_progress'],
+                ];
+
+                // Zwiększ licznik zadań
+                $groupedProjects[$projectId]['task_count']++;
+
+                // Zwiększ liczniki na podstawie postępu zadania
+                if ($row['task_progress'] === 0) {
+                    $groupedProjects[$projectId]['remaining_task_count']++;
+                } elseif ($row['task_progress'] > 0 && $row['task_progress'] < 100) {
+                    $groupedProjects[$projectId]['inprogress_task_count']++;
+                } elseif ($row['task_progress'] === 100) {
+                    $groupedProjects[$projectId]['completed_task_count']++;
+                }
+            }
+        }
+
+        return array_values($groupedProjects);
+    }
 }
