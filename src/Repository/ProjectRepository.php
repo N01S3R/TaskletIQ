@@ -158,4 +158,31 @@ class ProjectRepository extends EntityRepository
         // Zamień indeksy na numery i zwróć wynik
         return array_values($groupedProjects);
     }
+
+    /**
+     * Pobiera szczegóły projektu na podstawie jego ID wraz z zadaniami przypisanymi do danego użytkownika.
+     *
+     * @param int $projectId Identyfikator projektu
+     * @param int $userId Identyfikator użytkownika
+     * @return array Tablica z danymi projektu i zadaniami w płaskiej strukturze
+     */
+    public function getProjectDetails(int $projectId, int $userId): array
+    {
+        $qb = $this->createQueryBuilder('p')
+            ->select('p.projectName AS project_name, 
+                  t.taskId AS task_id, 
+                  t.taskName AS task_name, 
+                  t.taskStatus AS status')
+            ->leftJoin('p.tasks', 't') // Relacja z encją Tasks
+            ->leftJoin('t.users', 'u') // Relacja z encją Users
+            ->where('p.projectId = :projectId')
+            ->andWhere('u.userId = :userId')
+            ->setParameter('projectId', $projectId)
+            ->setParameter('userId', $userId);
+
+        // Pobranie wyników jako płaska tablica
+        $result = $qb->getQuery()->getArrayResult();
+
+        return $result;
+    }
 }

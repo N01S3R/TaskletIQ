@@ -1,11 +1,5 @@
 <?php App\Helpers\Template::partials('header_operator'); ?>
 
-<!-- <?php
-        echo '<pre>';
-        var_dump($data);
-        echo '</pre>';
-        ?> -->
-
 <div id="app">
     <div v-if="loading" class="loader">
         TaskletIQ
@@ -13,7 +7,7 @@
     </div>
     <div class="container">
         <header class="d-flex justify-content-between align-items-center m-4">
-            <h3 class="p-2 mb-0">{{ pageTitle }}</h3>
+            <h3 class="p-2 mb-0">{{ pageTitle }} - {{ projectName }}</h3> <!-- Dodanie projectName -->
             <div class="d-flex">
                 <a href="/operator/dashboard" class="btn btn-primary"><i class="bi bi-arrow-left"></i> Wróć</a>
             </div>
@@ -108,16 +102,21 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/vue@2/dist/vue.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Vue.Draggable/2.23.2/vuedraggable.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/vue@3"></script>
 <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+<!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/Vue.Draggable/2.23.2/vuedraggable.umd.min.js"></script> -->
 <script>
-    var app = new Vue({
-        el: '#app',
+    const {
+        createApp
+    } = Vue;
+
+    createApp({
         data() {
             return {
                 pageTitle: <?= json_encode($data['pageTitle']) ?>,
                 tasks: [],
+                tasksData: <?= json_encode($data['tasks']) ?>,
+                projectName: '', // Nowa zmienna na nazwę projektu
                 inprogress: [],
                 review: [],
                 approved: [],
@@ -128,47 +127,52 @@
             };
         },
         created() {
-            // Inicjalizacja danych z serwera
-            const tasksData = <?= json_encode($data['tasks']) ?>;
-            if (Array.isArray(tasksData)) {
-                this.tasks = tasksData.filter(task => task.task_progress === '0');
-                this.inprogress = tasksData.filter(task => task.task_progress === '1');
-                this.review = tasksData.filter(task => task.task_progress === '2');
-                this.approved = tasksData.filter(task => task.task_progress === '3');
-            } else {
-                console.error('Dane z serwera są nieprawidłowe:', tasksData);
+            if (Array.isArray(this.tasksData) && this.tasksData.length > 0) {
+                this.projectName = this.tasksData[0].project_name;
             }
+            if (Array.isArray(this.tasksData)) {
+                this.tasks = this.tasksData.filter(task => task.status === 'Nowy');
+                this.inprogress = this.tasksData.filter(task => task.status === 'W trakcie');
+                this.review = this.tasksData.filter(task => task.status === 'Do recenzji');
+                this.approved = this.tasksData.filter(task => task.status === 'Zakończone');
+            } else {
+                console.error('Dane z serwera są nieprawidłowe:', this.tasksData);
+                this.loading = false;
+            }
+        },
+        mounted() {
+            // Inicjalizacja Dragula po załadowaniu komponentu
+            dragula([
+                    document.getElementById('tasks'),
+                    document.getElementById('inprogress'),
+                    document.getElementById('review'),
+                    document.getElementById('approved')
+                ])
+                .on('drag', (el) => {
+                    el.classList.add('is-moving');
+                    this.togglePlaceholder(true);
+                    el.dataset.previousProcess = el.getAttribute('data-process');
+                })
+                .on('dragend', (el) => {
+                    el.classList.remove('is-moving');
+                    this.togglePlaceholder(false);
 
-            // Inicjalizacja Dragula po załadowaniu dokumentu
-            document.addEventListener('DOMContentLoaded', () => {
-                dragula([
-                        document.getElementById('tasks'),
-                        document.getElementById('inprogress'),
-                        document.getElementById('review'),
-                        document.getElementById('approved')
-                    ])
-                    .on('drag', (el) => {
-                        el.classList.add('is-moving');
-                        this.togglePlaceholder(true); // `this` odnosi się do instancji Vue
-                        el.dataset.previousProcess = el.getAttribute('data-process');
-                    })
-                    .on('dragend', (el) => {
-                        el.classList.remove('is-moving');
-                        this.togglePlaceholder(false); // `this` odnosi się do instancji Vue
+                    const dest = el.parentNode;
+                    if (dest) {
+                        const newProcess = dest.getAttribute('data-process');
+                        const previousProcess = el.dataset.previousProcess;
+                        const taskData = el.getAttribute('data-task');
 
-                        const dest = el.parentNode;
-                        if (dest) {
-                            const newProcess = dest.getAttribute('data-process');
-                            const previousProcess = el.dataset.previousProcess;
-                            const taskData = el.getAttribute('data-task');
-
-                            if (previousProcess !== newProcess) {
-                                el.setAttribute('data-process', newProcess);
-                                this.changeStatus(taskData, newProcess);
-                            }
+                        if (previousProcess !== newProcess) {
+                            el.setAttribute('data-process', newProcess);
+                            this.changeStatus(taskData, newProcess);
                         }
-                    });
-            });
+                    }
+                });
+
+            setTimeout(() => {
+                this.loading = false;
+            }, 3000);
         },
         methods: {
             togglePlaceholder(show) {
@@ -208,10 +212,10 @@
                 }
             },
             findTaskById(taskId) {
-                return (this.tasks.find(task => task.task_id == taskId) ||
-                    this.inprogress.find(task => task.task_id == taskId) ||
-                    this.review.find(task => task.task_id == taskId) ||
-                    this.approved.find(task => task.task_id == taskId)) || null;
+                return (this.tasks.find(task => task.task_id === taskId) ||
+                    this.inprogress.find(task => task.task_id === taskId) ||
+                    this.review.find(task => task.task_id === taskId) ||
+                    this.approved.find(task => task.task_id === taskId)) || null;
             },
             showNotification(type, message) {
                 const config = {
@@ -245,14 +249,10 @@
                     position: 'top right',
                 });
             },
-        },
-        mounted() {
-            setTimeout(() => {
-                this.loading = false;
-            }, 3000);
         }
-    });
+    }).mount('#app');
 </script>
+
 
 
 </body>

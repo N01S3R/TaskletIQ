@@ -4,6 +4,7 @@ namespace App\Controller;
 
 use App\View;
 use PDOException;
+use App\Entity\Task;
 use App\Entity\User;
 use App\Entity\Project;
 use App\Entity\TaskUser;
@@ -45,11 +46,12 @@ class OperatorController extends BaseController
     public function project(int $projectId): void
     {
         if ($this->checkRole('operator')) {
-            $projects = $this->operatorModel->getProjectDetails($projectId, $this->getUserId());
+            $projectRepository = $this->getRepository(Project::class);
+            $projectDetails = $projectRepository->getProjectDetails($projectId, $this->auth->getUserId());
 
             $data = [
-                'pageTitle' => 'Wszystkie zadania',
-                'tasks' => $projects
+                'pageTitle' => 'Szczegóły projektu',
+                'tasks' => $projectDetails
             ];
 
             $this->view->render('operator/operator_project', $data);
@@ -154,22 +156,34 @@ class OperatorController extends BaseController
     /**
      * Wyświetla szczegóły pojedynczego zadania.
      *
-     * @param int $id ID zadania
+     * @param int $taskId ID zadania
      * @return void
      */
-    public function singleTask(int $id): void
+    public function singleTask(int $taskId): void
     {
         if ($this->checkRole('operator')) {
-            $task = $this->operatorModel->getTaskById((int)$id);
+            // Używamy TaskRepository do pobrania zadania
+            $taskRepository = $this->getRepository(Task::class);
+            $task = $taskRepository->findOneByTaskId($taskId); // Użycie właściwej metody
+
             if (!$task) {
                 $this->view->render('404_page');
                 return;
             }
+
+            // Przygotowanie danych do przekazania do widoku
             $data = [
                 'pageTitle' => 'Zadanie',
-                'task' => $task,
+                'task' => [
+                    'task_name' => $task->getTaskName(),
+                    'task_description' => $task->getTaskDescription(),
+                    'task_description_long' => $task->getTaskDescriptionLong(),
+                    'task_created_at' => $task->getTaskCreatedAt() ? $task->getTaskCreatedAt()->format('Y-m-d H:i:s') : 'Nieznana data',
+                    'project_name' => $task->getProject()->getProjectName(), // Zakładając, że jest metoda getProject()
+                ],
             ];
 
+            // Renderowanie widoku z danymi
             $this->view->render('operator/operator_single_task', ['data' => $data]);
         } else {
             header('Location: /login');

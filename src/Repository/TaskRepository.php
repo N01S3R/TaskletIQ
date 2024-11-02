@@ -54,6 +54,21 @@ class TaskRepository extends EntityRepository
     }
 
     /**
+     * Znajduje zadanie po ID.
+     *
+     * @param int $taskId
+     * @return Task|null
+     */
+    public function findOneByTaskId(int $taskId): ?Task
+    {
+        return $this->createQueryBuilder('t')
+            ->where('t.taskId = :taskId')
+            ->setParameter('taskId', $taskId)
+            ->getQuery()
+            ->getOneOrNullResult();
+    }
+
+    /**
      * Zwraca wszystkie zadania powiązane z projektem o danym ID.
      *
      * @param int $projectId
