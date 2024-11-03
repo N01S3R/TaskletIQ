@@ -62,94 +62,57 @@ class OperatorController extends BaseController
     }
 
     /**
-     * Wyświetla status postępu zadań.
-     *
-     * @param int $id ID statusu
-     * @return void
-     */
-    public function process(int $id): void
-    {
-        if ($this->checkRole('operator')) {
-            if ($id) {
-                $colors = [1 => 'danger', 2 => 'warning', 3 => 'success'];
-                $data = [
-                    'pageTitle' => 'Rozpoczęte Zadania',
-                    'tasks' => $this->operatorModel->getTaskProgress($id),
-                    'color' => $colors[$id]
-                ];
-                View::render('operator/operator_tasks_status', $data);
-            }
-        } else {
-            header('Location: /login');
-            exit();
-        }
-    }
-
-    /**
      * Zmienia status zadania na podstawie danych wejściowych.
      *
      * @return void
      */
-    public function changeTaskStatus(): void
+    public function changeTaskStatus(array $data): void
     {
-        if ($this->checkRole('operator')) {
-            // Sprawdź, czy żądanie jest metodą POST
-            if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-                // Pobierz dane wejściowe z żądania
-                $data = json_decode(file_get_contents('php://input'), true);
-
-                // Walidacja danych wejściowych
-                if (isset($data['taskData']) && isset($data['columnId'])) {
-                    $taskId = (int)$data['taskData'];
-                    $newStatus = (int)$data['columnId'];
-
-                    try {
-                        // Zaktualizuj status zadania w bazie danych
-                        $this->operatorModel->updateTaskStatus($taskId, $newStatus);
-
-                        // Przygotuj odpowiedź
-                        $response = [
-                            'status' => 'success',
-                            'message' => 'Status zadania został zaktualizowany pomyślnie.'
-                        ];
-                        echo json_encode($response);
-                        return;
-                    } catch (PDOException $e) {
-                        // Przygotuj odpowiedź w przypadku błędu
-                        $response = [
-                            'status' => 'error',
-                            'message' => 'Nie udało się zaktualizować statusu zadania.',
-                            'error' => $e->getMessage()
-                        ];
-                        echo json_encode($response);
-                        return;
-                    }
-                } else {
-                    // Przygotuj odpowiedź w przypadku błędnych danych wejściowych
-                    $response = [
-                        'status' => 'error',
-                        'message' => 'Błędne dane wejściowe.'
-                    ];
-                    echo json_encode($response);
-                    return;
-                }
-            } else {
-                // Przygotuj odpowiedź w przypadku niepoprawnej metody żądania
-                $response = [
-                    'status' => 'error',
-                    'message' => 'Niepoprawna metoda żądania.'
-                ];
-                echo json_encode($response);
-                return;
-            }
-        } else {
-            // Przygotuj odpowiedź w przypadku niepoprawnej metody żądania
-            $response = [
+        if (!$this->checkRole('operator')) {
+            echo json_encode([
                 'status' => 'error',
                 'message' => 'Nie masz uprawnień'
-            ];
-            echo json_encode($response);
+            ]);
             return;
+        }
+
+        if (!isset($data['taskData'], $data['columnId'])) {
+            echo json_encode([
+                'status' => 'error',
+                'message' => 'Błędne dane wejściowe.'
+            ]);
+            return;
+        }
+
+        $taskId = (int)$data['taskData'];
+        $newProcess = (int)$data['columnId'];
+
+        $statusMap = [
+            0 => 'Nowy',
+            1 => 'Rozpoczęty',
+            2 => 'W trakcie',
+            3 => 'Ukończony',
+        ];
+
+        $newStatus = $statusMap[$newProcess] ?? 'Nieznany';
+
+        try {
+            // Pobierz repozytorium zadań
+            $taskRepository = $this->getRepository(Task::class);
+
+            // Zaktualizuj status zadania w bazie danych
+            $taskRepository->updateTaskProgress($taskId, $newStatus, $newProcess);
+
+            echo json_encode([
+                'status' => 'success',
+                'message' => 'Status zadania został zaktualizowany pomyślnie.'
+            ]);
+        } catch (PDOException $e) {
+            echo json_encode([
+                'status' => 'error',
+                'message' => 'Nie udało się zaktualizować statusu zadania.',
+                'error' => $e->getMessage()
+            ]);
         }
     }
 
@@ -164,7 +127,7 @@ class OperatorController extends BaseController
         if ($this->checkRole('operator')) {
             // Używamy TaskRepository do pobrania zadania
             $taskRepository = $this->getRepository(Task::class);
-            $task = $taskRepository->findOneByTaskId($taskId); // Użycie właściwej metody
+            $task = $taskRepository->findOneByTaskId($taskId);
 
             if (!$task) {
                 $this->view->render('404_page');
@@ -173,13 +136,13 @@ class OperatorController extends BaseController
 
             // Przygotowanie danych do przekazania do widoku
             $data = [
-                'pageTitle' => 'Zadanie',
+                'pageTitle' => 'Szczegóły zadania',
                 'task' => [
                     'task_name' => $task->getTaskName(),
                     'task_description' => $task->getTaskDescription(),
                     'task_description_long' => $task->getTaskDescriptionLong(),
                     'task_created_at' => $task->getTaskCreatedAt() ? $task->getTaskCreatedAt()->format('Y-m-d H:i:s') : 'Nieznana data',
-                    'project_name' => $task->getProject()->getProjectName(), // Zakładając, że jest metoda getProject()
+                    'project_name' => $task->getProject()->getProjectName(),
                 ],
             ];
 

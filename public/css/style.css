@@ -40,6 +40,9 @@
 .offcanvas {
   transition: transform 0.3s ease;
 }
+.breadcrumb-item a {
+  text-decoration: none; /* Usuwa podkreślenie z linków */
+}
 .size {
   min-height: 100px;
 }

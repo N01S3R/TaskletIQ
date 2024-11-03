@@ -240,4 +240,26 @@ class TaskRepository extends EntityRepository
 
         return true;
     }
+
+    /**
+     * Aktualizuje status procesu zadania na podstawie podanego identyfikatora.
+     *
+     * @param int $taskId Identyfikator zadania do aktualizacji
+     * @param int $newProcess Nowy status procesu zadania
+     * @return bool Zwraca true, jeśli aktualizacja powiodła się, w przeciwnym razie false
+     */
+    public function updateTaskProgress(int $taskId, string $newStatus, int $newProcess): bool
+    {
+        $task = $this->find($taskId);
+
+        if (!$task) {
+            return false;
+        }
+        $task->setTaskStatus($newStatus);
+        $task->setTaskProgress($newProcess);
+
+        $this->_em->flush();
+
+        return true;
+    }
 }

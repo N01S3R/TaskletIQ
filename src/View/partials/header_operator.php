@@ -19,7 +19,7 @@
 <body>
     <nav class="navbar navbar-expand-lg navbar-light bg-primary">
         <div class="container">
-            <a class="navbar-brand text-white p-0" href="<?= $_ENV["BASE_URL"]; ?>operator/dashboard"><img src="/images/logo.png" alt="User Avatar" class="avatar" style="height: 64px;"></a>
+            <a class="navbar-brand text-white p-0" href="<?= $_ENV["BASE_URL"]; ?>operator/dashboard"><img src="/images/logo.png" alt="User Avatar" style="height: 64px;"></a>
             <ul class="navbar-nav ml-auto bg-dark rounded">
                 <li class="nav-item dropdown d-none d-md-block">
                     <a class="nav-link dropdown-toggle text-white fs-5" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">

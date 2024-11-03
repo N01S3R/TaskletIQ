@@ -172,9 +172,9 @@ class ProjectRepository extends EntityRepository
             ->select('p.projectName AS project_name, 
                   t.taskId AS task_id, 
                   t.taskName AS task_name, 
-                  t.taskStatus AS status')
-            ->leftJoin('p.tasks', 't') // Relacja z encją Tasks
-            ->leftJoin('t.users', 'u') // Relacja z encją Users
+                  t.taskProgress AS task_progress')
+            ->leftJoin('p.tasks', 't')
+            ->leftJoin('t.users', 'u')
             ->where('p.projectId = :projectId')
             ->andWhere('u.userId = :userId')
             ->setParameter('projectId', $projectId)

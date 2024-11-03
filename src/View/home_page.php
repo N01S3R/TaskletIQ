@@ -1,8 +1,5 @@
 <?php App\Helpers\Template::partials('header_guest'); ?>
-<!-- <?php
-        echo "<pre>";
-        var_dump($data);
-        echo "</pre>"; ?> -->
+
 <div id="app">
     <div v-if="loading" class="loader">
         TaskletIQ

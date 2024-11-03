@@ -5,11 +5,18 @@
         TaskletIQ
         <img src="/images/loading.gif" alt="Loading..." width="150">
     </div>
-    <div class="container">
-        <header class="d-flex justify-content-between align-items-center m-4">
-            <h3 class="p-2 mb-0">{{ pageTitle }} - {{ projectName }}</h3> <!-- Dodanie projectName -->
-            <div class="d-flex">
-                <a href="/operator/dashboard" class="btn btn-primary"><i class="bi bi-arrow-left"></i> Wróć</a>
+    <div class="container my-4">
+        <nav aria-label="breadcrumb" class="main-breadcrumb mb-4">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="/">Creator</a></li>
+                <li class="breadcrumb-item"><a href="#">{{ pageTitle }} - {{ projectName }}</a></li>
+            </ol>
+        </nav>
+        <header class="d-flex justify-content-end align-items-center m-4">
+            <div>
+                <a href="/creator/dashboard" class="btn btn-primary">
+                    <i class="bi bi-arrow-left"></i> Pulpit
+                </a>
             </div>
         </header>
         <div class="row">
@@ -131,10 +138,10 @@
                 this.projectName = this.tasksData[0].project_name;
             }
             if (Array.isArray(this.tasksData)) {
-                this.tasks = this.tasksData.filter(task => task.status === 'Nowy');
-                this.inprogress = this.tasksData.filter(task => task.status === 'W trakcie');
-                this.review = this.tasksData.filter(task => task.status === 'Do recenzji');
-                this.approved = this.tasksData.filter(task => task.status === 'Zakończone');
+                this.tasks = this.tasksData.filter(task => task.task_progress === 0);
+                this.inprogress = this.tasksData.filter(task => task.task_progress === 1);
+                this.review = this.tasksData.filter(task => task.task_progress === 2);
+                this.approved = this.tasksData.filter(task => task.task_progress === 3);
             } else {
                 console.error('Dane z serwera są nieprawidłowe:', this.tasksData);
                 this.loading = false;
@@ -190,14 +197,13 @@
             },
             changeStatus(taskData, columnId) {
                 const task = this.findTaskById(taskData);
-
+                console.log(task);
                 if (task) {
                     // Przygotuj dane do wysłania
                     const dataToSend = {
                         taskData: taskData,
                         columnId: columnId
                     };
-
                     // Wyślij dane asynchronicznie na backend
                     axios.post('/api/status', dataToSend)
                         .then(response => {
@@ -212,10 +218,13 @@
                 }
             },
             findTaskById(taskId) {
-                return (this.tasks.find(task => task.task_id === taskId) ||
-                    this.inprogress.find(task => task.task_id === taskId) ||
-                    this.review.find(task => task.task_id === taskId) ||
-                    this.approved.find(task => task.task_id === taskId)) || null;
+                const foundTask = (
+                    this.tasks.find(task => task.task_id == taskId) ||
+                    this.inprogress.find(task => task.task_id == taskId) ||
+                    this.review.find(task => task.task_id == taskId) ||
+                    this.approved.find(task => task.task_id == taskId)
+                );
+                return foundTask || null;
             },
             showNotification(type, message) {
                 const config = {

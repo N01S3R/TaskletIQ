@@ -5,9 +5,21 @@
         <h1 class="mb-3">TaskletIQ</h1>
         <img src="/images/loading.gif" alt="Loading..." width="150">
     </div>
-
-    <div class="container" v-else>
-        <h2 class="p-4 text-center">{{ pageTitle }}</h2>
+    <div class="container my-4">
+        <nav aria-label="breadcrumb" class="main-breadcrumb mb-4">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="/">Creator</a></li>
+                <li class="breadcrumb-item"><a href="#">Projekt - {{ task.project_name }}</a></li>
+                <li class="breadcrumb-item"><a href="#">{{ pageTitle }} - {{ task.task_name }}</a></li>
+            </ol>
+        </nav>
+        <header class="d-flex justify-content-end align-items-center m-4">
+            <div>
+                <button onclick="window.history.back();" class="btn btn-primary">
+                    <i class="bi bi-arrow-left"></i> Wstecz
+                </button>
+            </div>
+        </header>
         <div class="row justify-content-center">
             <div class="col-md-8">
                 <div class="card rounded shadow-lg">
@@ -22,7 +34,6 @@
                     </div>
                     <div class="card-footer d-flex justify-content-between align-items-center">
                         <small class="text-muted">Utworzone: {{ task.task_created_at }}</small>
-                        <a href="javascript:history.back()" class="btn btn-secondary">Wróć</a>
                     </div>
                 </div>
             </div>

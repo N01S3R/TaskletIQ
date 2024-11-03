@@ -5,10 +5,13 @@
         TaskletIQ
         <img src="/images/loading.gif" alt="Loading..." width="150">
     </div>
-    <div class="container" v-else>
-        <header class="d-flex justify-content-between align-items-center m-4">
-            <h3 class="p-2 mb-0">{{ pageTitle }}</h3>
-        </header>
+    <div class="container my-4">
+        <nav aria-label="breadcrumb" class="main-breadcrumb mb-4">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="/">Creator</a></li>
+                <li class="breadcrumb-item"><a href="#">{{ pageTitle }}</a></li>
+            </ol>
+        </nav>
         <div class="row">
             <div class="col-xl-9 col-md-12 col-12">
                 <div class="card mb-4">
@@ -18,24 +21,24 @@
                     <div class="card-body">
                         <div class="row">
                             <div class="col-xl-4 col-md-6 col-12" v-for="(project, index) in projects" :key="project.project_id">
-                                <div class="card project-card bg-primary mb-4 shadow">
+                                <div class="card project-card bg-dark mb-4 shadow">
                                     <a :href="'/operator/project/' + project.project_id" class="project text-decoration-none">
                                         <div class="card-header bg-secondary text-white d-flex justify-content-between align-items-center">
                                             <h2 class="mb-0">{{ project.project_name }}</h2>
                                         </div>
                                         <div class="card-body text-center text-white">
                                             <div class="task-status">
-                                                <div class="text-info">
+                                                <div class="text-primary">
                                                     <strong>Zadania: </strong>{{ project.task_count }}
                                                 </div>
-                                                <div class="text-warning">
+                                                <div class="text-danger">
                                                     <strong>Rozpoczęte: </strong>{{ project.remaining_task_count }}
                                                 </div>
-                                                <div class="text-secondary">
+                                                <div class="text-warning">
                                                     <strong>W trakcie: </strong>{{ project.inprogress_task_count }}
                                                 </div>
                                                 <div class="text-success">
-                                                    <strong>Ukończone: </strong>{{ project.completed_task_count }}
+                                                    <strong>Zakończone: </strong>{{ project.completed_task_count }}
                                                 </div>
                                             </div>
                                         </div>
@@ -127,11 +130,11 @@
                         datasets: [{
                             label: 'Statystyki zadań',
                             data: [
-                                this.totalNotCompletedTasks, // Właściwość
-                                this.totalInProgressTasks, // Właściwość
-                                this.totalCompletedTasks // Właściwość
+                                this.totalNotCompletedTasks,
+                                this.totalInProgressTasks,
+                                this.totalCompletedTasks
                             ],
-                            backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56'],
+                            backgroundColor: ['#375a7f', '#ffc107', '#198754'],
                         }]
                     },
                     options: {

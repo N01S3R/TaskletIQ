@@ -168,11 +168,11 @@ class TaskUserRepository extends EntityRepository
                 $groupedProjects[$projectId]['task_count']++;
 
                 // Zwiększ liczniki na podstawie postępu zadania
-                if ($row['task_progress'] === 0) {
+                if ($row['task_progress'] === 1) {
                     $groupedProjects[$projectId]['remaining_task_count']++;
-                } elseif ($row['task_progress'] > 0 && $row['task_progress'] < 100) {
+                } elseif ($row['task_progress'] === 2) {
                     $groupedProjects[$projectId]['inprogress_task_count']++;
-                } elseif ($row['task_progress'] === 100) {
+                } elseif ($row['task_progress'] === 3) {
                     $groupedProjects[$projectId]['completed_task_count']++;
                 }
             }

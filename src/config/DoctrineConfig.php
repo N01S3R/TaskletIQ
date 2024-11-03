@@ -5,6 +5,7 @@ namespace App\Config;
 use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\Tools\Setup;
 use Dotenv\Dotenv;
+use Symfony\Component\Cache\Adapter\FilesystemAdapter;
 
 class DoctrineConfig
 {
@@ -14,7 +15,7 @@ class DoctrineConfig
         $dotenv = Dotenv::createImmutable(__DIR__ . '/../../'); // Ścieżka do katalogu z plikiem .env
         $dotenv->load();
 
-        $isDevMode = getenv('APP_ENV') === 'local'; // Włącz tryb debugowania jeśli środowisko to 'local'
+        $isDevMode = $_ENV['APP_ENV'] === 'local'; // Włącz tryb debugowania jeśli środowisko to 'local'
 
         // Ustawienia Doctrine
         $config = Setup::createAnnotationMetadataConfiguration(
@@ -25,6 +26,11 @@ class DoctrineConfig
             false
         );
         $config->setAutoGenerateProxyClasses(true);
+
+        // Ustawienia pamięci podręcznej
+        $cache = new FilesystemAdapter(); // Używamy FilesystemAdapter jako pamięci podręcznej
+        $config->setMetadataCache($cache);
+
         // Konfiguracja połączenia z bazą danych
         $conn = [
             'driver'   => 'pdo_mysql',
