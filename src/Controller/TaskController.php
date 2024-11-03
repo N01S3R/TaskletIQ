@@ -330,7 +330,7 @@ class TaskController extends BaseController
             return;
         }
 
-        $isUserAssigned = $taskUserRepository->isUserAssignedToTask($taskId, $userId);
+        $isUserAssigned = $taskUserRepository->isUserAssignedToTask($userId, $taskId);
         if ($isUserAssigned) {
             $responseData['error'] = "Użytkownik '{$user->getUsername()}' jest już przypisany do zadania " . $task->getTaskName();
             echo json_encode($responseData);
@@ -390,7 +390,7 @@ class TaskController extends BaseController
             return;
         }
 
-        $isUserAssigned = $taskUserRepository->isUserAssignedToTask($taskId, $userId);
+        $isUserAssigned = $taskUserRepository->isUserAssignedToTask($userId, $taskId);
         if (!$isUserAssigned) {
             $responseData['error'] = "Użytkownik '{$user->getUsername()}' nie jest przypisany do zadania " . $task->getTaskName();
             echo json_encode($responseData);

@@ -44,7 +44,7 @@ $webRoutes = [
     '/operator/dashboard' => [
         'GET' => 'OperatorController@displayDashboard'
     ],
-    '/operator/project/([\w-]+)' => [
+    '/operator/project/(\d+)' => [
         'GET' => 'OperatorController@project'
     ],
     '/operator/task/([\w-]+)' => [

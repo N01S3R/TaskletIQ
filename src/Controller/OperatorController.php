@@ -49,6 +49,16 @@ class OperatorController extends BaseController
             $projectRepository = $this->getRepository(Project::class);
             $projectDetails = $projectRepository->getProjectDetails($projectId, $this->auth->getUserId());
 
+            $taskUserRepository = $this->getRepository(TaskUser::class);
+            $userId = $this->auth->getUserId();
+
+            $isUserAssigned = $taskUserRepository->isUserAssignedToProjectTasks($projectId, $userId);
+
+            if (!$isUserAssigned) {
+                $this->view->render('404_page');
+                return;
+            }
+
             $data = [
                 'pageTitle' => 'Szczegóły projektu',
                 'tasks' => $projectDetails
@@ -131,6 +141,15 @@ class OperatorController extends BaseController
 
             if (!$task) {
                 $this->view->render('404_page');
+                return;
+            }
+
+            $userId = $this->auth->getUserId();
+            $taskUserRepository = $this->getRepository(TaskUser::class);
+            $isUserAssigned = $taskUserRepository->isUserAssignedToTask($userId, $taskId);
+
+            if (!$isUserAssigned) {
+                $this->view->render('no_permission');
                 return;
             }
 

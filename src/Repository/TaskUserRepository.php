@@ -33,7 +33,7 @@ class TaskUserRepository extends EntityRepository
      * @param int $userId
      * @return bool
      */
-    public function isUserAssignedToTask(int $taskId, int $userId): bool
+    public function isUserAssignedToTask(int $userId, int $taskId): bool
     {
         return (bool) $this->createQueryBuilder('tu')
             ->select('COUNT(tu.id)')
@@ -179,5 +179,25 @@ class TaskUserRepository extends EntityRepository
         }
 
         return array_values($groupedProjects);
+    }
+
+    /**
+     * Sprawdza, czy użytkownik jest przypisany do zadań w projekcie.
+     *
+     * @param int $projectId
+     * @param int $userId
+     * @return bool
+     */
+    public function isUserAssignedToProjectTasks(int $projectId, int $userId): bool
+    {
+        return (bool) $this->createQueryBuilder('tu')
+            ->select('COUNT(tu.id)')
+            ->innerJoin('tu.task', 't')
+            ->where('t.project = :projectId')
+            ->andWhere('tu.user = :userId')
+            ->setParameter('projectId', $projectId)
+            ->setParameter('userId', $userId)
+            ->getQuery()
+            ->getSingleScalarResult();
     }
 }

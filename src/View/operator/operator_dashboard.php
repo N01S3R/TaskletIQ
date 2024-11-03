@@ -126,15 +126,14 @@
                 new Chart(ctx, {
                     type: 'pie',
                     data: {
-                        labels: ['Zadania do wykonania', 'Zadania w trakcie', 'Ukończone'],
+                        labels: ['Zadania w trakcie', 'Ukończone'],
                         datasets: [{
                             label: 'Statystyki zadań',
                             data: [
-                                this.totalNotCompletedTasks,
                                 this.totalInProgressTasks,
                                 this.totalCompletedTasks
                             ],
-                            backgroundColor: ['#375a7f', '#ffc107', '#198754'],
+                            backgroundColor: ['#ffc107', '#198754'],
                         }]
                     },
                     options: {
@@ -142,11 +141,23 @@
                         plugins: {
                             legend: {
                                 position: 'top',
+                                labels: {
+                                    color: '#ffffff', // Zmień kolor tekstu legendy na czarny
+                                },
+                            },
+                            tooltip: {
+                                bodyColor: '#ffffff', // Zmień kolor tekstu w tooltipach
+                            },
+                        },
+                        elements: {
+                            arc: {
+                                borderColor: '#ffffff', // Kolor obramowania kawałków
                             },
                         }
                     }
                 });
             }
+
         }
     }).mount('#app');
 </script>
