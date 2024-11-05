@@ -272,7 +272,7 @@ class UserRepository extends EntityRepository
      * @param string $role
      * @return User|null
      */
-    public function createUser(string $name, string $email, string $username, string $avatar, string $role, string $registrationCode): ?User
+    public function createUser(string $name, string $email, string $username, string $password, string $avatar, string $role, string $registrationCode): ?User
     {
         // Sprawdzanie, czy użytkownik o podanym emailu lub loginie już istnieje
         if ($this->findByEmail($email) || $this->findByLogin($username)) {
@@ -286,7 +286,6 @@ class UserRepository extends EntityRepository
         $user->setLogin($username);
 
         // Generowanie losowego hasła
-        $password = $this->generateRandomPassword(10);
         $user->setPassword(password_hash($password, PASSWORD_BCRYPT));
         $user->setLogged(0);
         $user->setRegistrationToken($registrationCode);
@@ -303,17 +302,6 @@ class UserRepository extends EntityRepository
         $mailer->sendPasswordEmail($email, $password);
 
         return $user;
-    }
-
-    /**
-     * Generuje losowe hasło.
-     *
-     * @param int $length
-     * @return string
-     */
-    private function generateRandomPassword(int $length = 10): string
-    {
-        return bin2hex(random_bytes($length / 2)); // Wygeneruje hasło o podanej długości
     }
 
     /**
@@ -356,5 +344,44 @@ class UserRepository extends EntityRepository
         $this->_em->flush();
 
         return true; // Zwracamy true, jeśli aktualizacja powiodła się
+    }
+
+    /**
+     * Zmienia hasło użytkownika.
+     *
+     * @param int $userId
+     * @param string $currentPassword
+     * @param string $newPassword
+     * @return bool
+     */
+    public function changePassword(int $userId, string $currentPassword, string $newPassword): bool
+    {
+        $user = $this->find($userId);
+
+        if (!$user) {
+            return false;
+        }
+
+        if (!password_verify($currentPassword, $user->getPassword())) {
+            return false;
+        }
+
+        $user->setPassword(password_hash($newPassword, PASSWORD_BCRYPT));
+
+        $this->_em->flush();
+
+        return true;
+    }
+
+    /**
+     * Sprawdza, czy kod rejestracyjny jest unikalny.
+     *
+     * @param string $registrationCode
+     * @return bool
+     */
+    public function isRegistrationCodeUnique(string $registrationCode): bool
+    {
+        $user = $this->findOneBy(['registrationToken' => $registrationCode]);
+        return $user === null;
     }
 }

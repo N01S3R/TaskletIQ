@@ -13,7 +13,6 @@
     <link rel="stylesheet" href="<?= $_ENV["BASE_URL"]; ?>css/bootstrap.min.css">
     <!-- Include Vue.js library -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/dragula/3.7.2/dragula.min.js"></script>
-    <script src="https://unpkg.com/vue@next"></script>
 </head>
 
 <body>
@@ -31,6 +30,7 @@
                     </a>
                     <ul class="dropdown-menu" aria-labelledby="userDropdown">
                         <li><a class="dropdown-item fs-6" href="/operator/dashboard"><i class="bi bi-list-task me-2 fs-5"></i> Pulpit</a></li>
+                        <li><a class="dropdown-item fs-6" href="/operator/settings"><i class="bi bi-gear me-2 fs-5"></i> Ustawienia</a></li>
                         <li>
                             <hr class="dropdown-divider">
                         </li>

@@ -27,7 +27,7 @@
                                     <label for="password" class="form-label">Hasło</label>
                                     <input type="password" class="form-control" id="password" name="password" required>
                                 </div>
-                                <div class="d-flex justify-content-between align-items-center"> <!-- Nowy div dla przycisków -->
+                                <div class="d-flex justify-content-between align-items-center">
                                     <button type="submit" class="btn btn-primary">
                                         <i class="bi bi-box-arrow-in-right"></i> Zaloguj
                                     </button>
@@ -45,12 +45,18 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/vue@2.6.14/dist/vue.js"></script>
+<script src="https://unpkg.com/vue@3.2.31/dist/vue.global.js"></script> <!-- Updated Vue 3 link -->
+
 <script>
-    var app = new Vue({
-        el: '#app',
-        data: {
-            loading: true // Ustawienie początkowe na true, aby pokazać preloader
+    const {
+        createApp
+    } = Vue;
+
+    createApp({
+        data() {
+            return {
+                loading: true // Ustawienie początkowe na true, aby pokazać preloader
+            };
         },
         mounted() {
             // Symulacja opóźnienia ładowania
@@ -58,7 +64,7 @@
                 this.loading = false; // Ustawienie na false po załadowaniu strony
             }, 1000); // Możesz dostosować czas opóźnienia
         }
-    });
+    }).mount('#app');
 </script>
 </body>
 

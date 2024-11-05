@@ -43,6 +43,9 @@ $apiRoutes = [
     '/api/status' => [
         'POST' => 'OperatorController@changeTaskStatus'
     ],
+    '/api/change-password' => [
+        'POST' => 'OperatorController@changePassword'
+    ],
     // Admin
     '/api/users' => [
         'POST' => 'AdminController@allUsers',

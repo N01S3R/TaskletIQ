@@ -210,28 +210,18 @@ class AdminController extends BaseController
             $name = $data['user_name'];
             $email = $data['user_email'];
             $login = $data['user_login'];
+            $password = $this->generateRandomPassword();
             $avatar = $data['user_avatar'];
             $role = $data['user_role'];
-
+            $registrationCode = false;
             if ($name && $email && $login) {
-                $userRepository = $this->getRepository(User::class);
-                $registrationCode = $this->generateRegistrationCode($name);
-                $user = $userRepository->createUser($name, $email, $login, $avatar, $role, $registrationCode);
 
-                if ($user) {
+                $success = $this->auth->register($name, $email, $login, $password, $registrationCode, $avatar, $role);
+
+                if ($success) {
                     $response = [
                         'status' => 'success',
                         'message' => 'Użytkownik został dodany pomyślnie.',
-                        'data' => [
-                            'userId' => $user->getUserId(),
-                            'username' => $user->getUsername(),
-                            'login' => $user->getLogin(),
-                            'email' => $user->getEmail(),
-                            'avatar' => $user->getAvatar(),
-                            'role' => $user->getRole(),
-                            'logged' => $user->isLogged(),
-                            'registrationDate' => $user->getRegistrationDate()->format('Y-m-d H:i:s')
-                        ]
                     ];
                 } else {
                     $response = [
@@ -255,16 +245,15 @@ class AdminController extends BaseController
         }
     }
 
+
     /**
-     * Generuje unikalny kod rejestracyjny na podstawie nazwy użytkownika.
-     * 
-     * @param string $username Nazwa użytkownika
-     * 
-     * @return string Kod rejestracyjny
+     * Generuje losowe hasło.
+     *
+     * @param int $length
+     * @return string
      */
-    private function generateRegistrationCode(string $username): string
+    private function generateRandomPassword(int $length = 10): string
     {
-        $data = $username . microtime(true) * 1000;
-        return md5($data);
+        return bin2hex(random_bytes($length / 2));
     }
 }

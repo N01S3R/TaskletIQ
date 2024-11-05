@@ -50,6 +50,9 @@ $webRoutes = [
     '/operator/task/([\w-]+)' => [
         'GET' => 'OperatorController@singleTask'
     ],
+    '/operator/settings' => [
+        'GET' => 'OperatorController@operatorSettings'
+    ],
     // Admin
     '/admin/dashboard' => [
         'GET' => 'AdminController@displayDashboard'

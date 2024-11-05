@@ -34,7 +34,7 @@ class Auth
     {
         $login = AuthHelpers::sanitizeInput($login);
         $password = AuthHelpers::sanitizeInput($password);
-
+        var_dump($login, $password);
         if (AuthHelpers::validatePassword($password)) {
             $user = $this->userRepository->findByLogin($login);
 
@@ -86,22 +86,29 @@ class Auth
      * 
      * @return bool Zwraca true, jeśli rejestracja powiodła się, w przeciwnym razie false
      */
-    public function register(string $name, string $email, string $username, string $password, string $registrationCode, string $role): bool
+    public function register(string $name, string $email, string $username, string $password, string $registrationCode, string $avatar, string $role): void
     {
         $name = AuthHelpers::sanitizeInput($name);
         $email = AuthHelpers::sanitizeInput($email);
         $username = AuthHelpers::sanitizeInput($username);
         $password = AuthHelpers::sanitizeInput($password);
         $registrationCode = AuthHelpers::sanitizeInput($registrationCode);
+        $avatar = AuthHelpers::sanitizeInput($avatar);
+        $role = AuthHelpers::sanitizeInput($role);
+        var_dump($name, $email, $username, $password, $registrationCode, $avatar, $role);
+        // if (AuthHelpers::validatePassword($password) && $this->isValidUsernameAndEmail($username, $email)) {
+        //     $hashedPassword = password_hash($password, PASSWORD_BCRYPT);
+        //     $this->userRepository->createUser($name, $email, $username, $password, $avatar, $role, $registrationCode);
 
-        if (AuthHelpers::validatePassword($password) && $this->isValidUsernameAndEmail($username, $email)) {
-            $hashedPassword = password_hash($password, PASSWORD_BCRYPT);
-            $this->userRepository->register($name, $email, $username, $hashedPassword, $registrationCode, $role);
+        //     return true;
+        // }
 
-            return true;
-        }
-
-        return false;
+        // $code = $this->userRepository->isRegistrationCodeUnique($registrationCode);
+        // if ($code) {
+        //     $registrationCode = $this->generateRegistrationCode($username);
+        //     $role = 'creator';
+        // }
+        // return false;
     }
 
     /**
@@ -138,14 +145,27 @@ class Auth
             return false;
         }
 
-        if (!$this->userRepository->isEmailUnique($email)) {
+        if ($this->userRepository->findByEmail($email)) {
             return false;
         }
 
-        if (!$this->userRepository->isUsernameUnique($username)) {
+        if ($this->userRepository->findByLogin($username)) {
             return false;
         }
 
         return true;
+    }
+
+    /**
+     * Generuje unikalny kod rejestracyjny na podstawie nazwy użytkownika.
+     * 
+     * @param string $username Nazwa użytkownika
+     * 
+     * @return string Kod rejestracyjny
+     */
+    private function generateRegistrationCode(string $username): string
+    {
+        $data = $username . microtime(true) * 1000;
+        return md5($data);
     }
 }

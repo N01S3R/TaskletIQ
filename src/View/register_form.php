@@ -6,7 +6,7 @@
         <img src="/images/loading.gif" alt="Loading..." width="150">
     </div>
     <div v-else>
-        <div class="container mt-4" id="app">
+        <div class="container mt-4">
             <div class="row mt-4">
                 <div class="col-md-4 offset-md-4">
                     <div class="card">
@@ -39,7 +39,6 @@
                                     <input type="password" class="form-control" id="password" v-model="form.password" @input="debouncedValidateField('password')" required autocomplete="off">
                                     <div v-if="errors.password" class="text-danger">{{ errors.password }}</div>
                                 </div>
-
                                 <div class="d-flex justify-content-between align-items-center">
                                     <button type="submit" class="btn btn-success" :disabled="!isFormValid"><i class="bi bi-person-plus"></i> Zarejestruj</button>
                                     <a href="/login" class="btn btn-primary">
@@ -54,30 +53,37 @@
         </div>
     </div>
 </div>
+
 <script src="https://cdn.jsdelivr.net/npm/lodash@4.17.21/lodash.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/vue@2.6.14/dist/vue.js"></script>
+<script src="https://unpkg.com/vue@3.2.31/dist/vue.global.js"></script> <!-- Updated Vue 3 link -->
 <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+
 <script>
-    new Vue({
-        el: '#app',
-        data: {
-            form: {
-                fullName: '',
-                email: '',
-                username: '',
-                registration_code: '',
-                password: ''
-            },
-            errors: {
-                fullName: '',
-                email: '',
-                username: '',
-                password: ''
-            },
-            loading: true,
-            error: '',
-            message: ''
+    const {
+        createApp
+    } = Vue;
+
+    createApp({
+        data() {
+            return {
+                form: {
+                    fullName: '',
+                    email: '',
+                    username: '',
+                    registration_code: '',
+                    password: ''
+                },
+                errors: {
+                    fullName: '',
+                    email: '',
+                    username: '',
+                    password: ''
+                },
+                loading: true,
+                error: '',
+                message: ''
+            };
         },
         computed: {
             isFormValid() {
@@ -120,14 +126,11 @@
                             this.message = response.data.message;
                             this.error = '';
 
-                            // Resetowanie formularza
                             this.form.fullName = '';
                             this.form.email = '';
                             this.form.username = '';
                             this.form.registration_code = '';
                             this.form.password = '';
-
-                            console.log(response.data.message);
                         } else {
                             throw new Error('Nieoczekiwana odpowiedź serwera');
                         }
@@ -140,12 +143,11 @@
             }
         },
         mounted() {
-            // Symulacja opóźnienia ładowania
             setTimeout(() => {
-                this.loading = false; // Ustawienie na false po załadowaniu strony
-            }, 1000); // Możesz dostosować czas opóźnienia
+                this.loading = false;
+            }, 1000);
         }
-    });
+    }).mount('#app');
 </script>
 </body>
 

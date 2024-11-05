@@ -14,7 +14,7 @@ class AuthHelpers
     public static function validatePassword($password)
     {
         // Sprawdź, czy hasło spełnia określone wymagania (np. długość)
-        return strlen($password) >= 8;
+        return strlen($password) >= 10;
     }
 
     // Funkcja do generowania unikalnego tokenu CSRF
