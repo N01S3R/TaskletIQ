@@ -70,4 +70,70 @@ class TokenRepository extends EntityRepository
         $this->_em->remove($token);
         $this->_em->flush();
     }
+
+    /**
+     * Zwraca identyfikator użytkownika powiązanego z danym tokenem.
+     *
+     * @param string $tokenValue
+     * @return int|null
+     */
+    public function getUserIdByToken(string $tokenValue): ?int
+    {
+        $result = $this->createQueryBuilder('t')
+            ->select('IDENTITY(t.user)')
+            ->where('t.token = :tokenValue')
+            ->setParameter('tokenValue', $tokenValue)
+            ->getQuery()
+            ->getSingleScalarResult();
+
+        return $result !== null ? (int) $result : null;
+    }
+
+    /**
+     * Zwraca registration_token z tabeli users na podstawie tokena z tabeli tokens.
+     *
+     * @param string $token
+     * @return string|null
+     */
+    public function getUserTokenByToken(string $token): ?string
+    {
+        $result = $this->createQueryBuilder('t')
+            ->select('u.registrationToken')
+            ->join('t.user', 'u')
+            ->where('t.token = :token')
+            ->setParameter('token', $token)
+            ->getQuery()
+            ->getSingleScalarResult();
+
+        if ($result) {
+            $tokenToDelete = $this->createQueryBuilder('t')
+                ->where('t.token = :token')
+                ->setParameter('token', $token)
+                ->getQuery()
+                ->getSingleResult();
+            $this->remove($tokenToDelete);
+
+            return $result;
+        }
+        return null;
+    }
+
+    /**
+     * Sprawdza, czy w tabeli tokens istnieje token o podanej wartości.
+     *
+     * @param string $tokenValue Wartość tokena do sprawdzenia.
+     * @return bool Zwraca true, jeśli token istnieje, lub false, jeśli nie ma.
+     */
+    public function existsToken(string $tokenValue): bool
+    {
+        $token = $this->createQueryBuilder('t')
+            ->select('t.token')
+            ->where('t.token = :tokenValue')
+            ->setParameter('tokenValue', $tokenValue)
+            ->setMaxResults(1)
+            ->getQuery()
+            ->getOneOrNullResult();
+
+        return $token !== null;
+    }
 }

@@ -13,8 +13,34 @@ class AuthHelpers
     // Funkcja do walidacji hasła
     public static function validatePassword($password)
     {
-        // Sprawdź, czy hasło spełnia określone wymagania (np. długość)
-        return strlen($password) >= 10;
+        return strlen($password) >= 10 &&
+            preg_match('/[A-Z]/', $password) &&
+            preg_match('/[0-9]/', $password) &&
+            preg_match('/[!@#$%^&*()_+={};:"\'<>,.]/', $password);
+    }
+
+    // Funkcja do walidacji pełnego imienia
+    public static function validateFullName($fullName)
+    {
+        return preg_match('/^[a-zA-Z]{3,15}$/', $fullName);
+    }
+
+    // Funkcja do walidacji nazwy użytkownika
+    public static function validateUsername($username, $userRepository)
+    {
+        if (strlen($username) > 11 || !preg_match('/^[a-zA-Z0-9]+$/', $username)) {
+            return false;
+        }
+        return $userRepository->findByLogin($username) === null;
+    }
+
+    // Funkcja do walidacji adresu email
+    public static function validateEmail($email, $userRepository)
+    {
+        if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            return false;
+        }
+        return $userRepository->findByEmail($email) === null;
     }
 
     // Funkcja do generowania unikalnego tokenu CSRF
@@ -26,16 +52,14 @@ class AuthHelpers
     // Funkcja do weryfikacji tokenu CSRF
     public static function verifyCSRFToken($token)
     {
-        // Sprawdź, czy token jest zgodny z tym, co przechowywane jest w sesji
         return $token === $_SESSION['csrf_token'];
     }
 
     // Funkcja do ustawienia nagłówków bezpieczeństwa sesji
     public static function setSessionSecurityHeaders()
     {
-        // Ustaw nagłówki bezpieczeństwa sesji
         ini_set('session.cookie_httponly', '1');
         ini_set('session.use_only_cookies', '1');
-        ini_set('session.cookie_secure', '1'); // Ustawia tylko w przypadku używania protokołu HTTPS
+        ini_set('session.cookie_secure', '1');
     }
 }

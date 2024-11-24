@@ -52,11 +52,30 @@
             </div>
         </div>
     </div>
+
+    <div class="modal fade" id="registerModal" tabindex="-1" aria-labelledby="registerModalLabel" aria-hidden="true" ref="registerModal">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="registerModalLabel">Trwa rejestracja...</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" @click="closeModal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="progress">
+                        <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" :style="{ width: progressBarWidth + '%' }" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+                    </div>
+                    <div class="text-center mt-2">
+                        <span>{{ progressStage }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/lodash@4.17.21/lodash.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-<script src="https://unpkg.com/vue@3.2.31/dist/vue.global.js"></script> <!-- Updated Vue 3 link -->
+<script src="https://unpkg.com/vue@3.2.31/dist/vue.global.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
 
 <script>
@@ -71,7 +90,7 @@
                     fullName: '',
                     email: '',
                     username: '',
-                    registration_code: '',
+                    registration_code: <?php echo json_encode($data['registrationCode']); ?>,
                     password: ''
                 },
                 errors: {
@@ -82,7 +101,9 @@
                 },
                 loading: true,
                 error: '',
-                message: ''
+                message: '',
+                progressBarWidth: 0,
+                progressStage: 'Rozpoczynanie rejestracji...',
             };
         },
         computed: {
@@ -112,6 +133,8 @@
             async register() {
                 this.error = '';
                 this.message = '';
+                this.progressBarWidth = 0;
+                this.progressStage = 'Rozpoczynanie rejestracji...';
 
                 await this.validateField('fullName');
                 await this.validateField('email');
@@ -119,13 +142,33 @@
                 await this.validateField('password');
 
                 if (this.isFormValid) {
+                    this.showModal();
+                    let progress = 0;
+                    const progressInterval = setInterval(() => {
+                        if (progress < 40) {
+                            progress += 10;
+                            this.progressBarWidth = progress;
+                            this.progressStage = 'Sprawdzanie danych...';
+                        } else if (progress >= 40 && progress < 70) {
+                            progress += 10;
+                            this.progressBarWidth = progress;
+                            this.progressStage = 'Przygotowanie formularza...';
+                        } else if (progress >= 70 && progress < 100) {
+                            progress += 10;
+                            this.progressBarWidth = progress;
+                            this.progressStage = 'Wysyłanie formularza...';
+                        } else if (progress === 100) {
+                            clearInterval(progressInterval);
+                            this.progressStage = 'Rejestracja zakończona!';
+                            this.closeModal();
+                        }
+                    }, 500);
+
                     try {
                         const response = await axios.post('/register', this.form);
-
                         if (response && response.data) {
                             this.message = response.data.message;
                             this.error = '';
-
                             this.form.fullName = '';
                             this.form.email = '';
                             this.form.username = '';
@@ -135,11 +178,20 @@
                             throw new Error('Nieoczekiwana odpowiedź serwera');
                         }
                     } catch (error) {
-                        console.error(error);
                         this.error = error.response && error.response.data ? error.response.data.error : 'Rejestracja nie powiodła się';
                         this.message = '';
+                        this.closeModal();
                     }
                 }
+            },
+
+            showModal() {
+                const modal = new bootstrap.Modal(this.$refs.registerModal);
+                modal.show();
+            },
+            closeModal() {
+                const modal = bootstrap.Modal.getInstance(this.$refs.registerModal);
+                if (modal) modal.hide();
             }
         },
         mounted() {

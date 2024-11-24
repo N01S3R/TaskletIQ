@@ -3,6 +3,7 @@
 namespace App\Controller;
 
 use App\Entity\User;
+use App\Entity\Token;
 use App\Service\Auth;
 use App\Helpers\AuthHelpers;
 use Doctrine\ORM\EntityManager;
@@ -16,20 +17,34 @@ class RegisterController extends BaseController
 
     /**
      * Wyświetla formularz rejestracji lub przekierowuje zalogowanych użytkowników.
-     * 
+     *
+     * Jeśli użytkownik jest zalogowany, następuje przekierowanie do odpowiedniej strony. 
+     * Jeśli nie, wyświetlany jest formularz rejestracji z opcjonalnym kodem rejestracyjnym.
+     *
+     * @param string $registrationCode Opcjonalny kod rejestracyjny.
      * @return void
      */
-    public function index(): void
+    public function index($registrationCode): void
     {
         if ($this->auth->getUserId()) {
             $userRole = $this->auth->getUserRole();
             $redirectUrl = ($userRole === 'creator') ? 'creator/dashboard' : 'operator/dashboard';
             header('Location: ' . getenv('BASE_URL') . $redirectUrl);
             exit;
-        } else {
-            // Renderujemy formularz rejestracji
-            $this->render('register_form');
         }
+
+        if ($registrationCode) {
+            $tokenRepository = $this->getRepository(Token::class);
+            $existingToken = $tokenRepository->existsToken($registrationCode);
+
+            if (!$existingToken) {
+                $registrationCode = '';
+            }
+        } else {
+            $registrationCode = '';
+        }
+
+        $this->render('register_form', ['registrationCode' => $registrationCode]);
     }
 
     /**
@@ -37,7 +52,7 @@ class RegisterController extends BaseController
      * 
      * @return void
      */
-    public function register(array $requestData): void
+    public function registerUser(array $requestData): void
     {
         $name = $requestData['fullName'];
         $email = $requestData['email'];
@@ -47,7 +62,7 @@ class RegisterController extends BaseController
         $avatar = (!empty($requestData['registration_code'])) ? 'operator.png' : 'creator.png';
         $role = (!empty($requestData['registration_code'])) ? 'operator' : 'creator';
 
-        $success = $this->auth->register($name, $email, $username, $password, $registrationCode, $avatar, $role);
+        $success = $this->auth->register($name, $email, $username, $password, $avatar, $role, $registrationCode);
 
         if ($success) {
             echo json_encode(['message' => 'Konto zostało utworzone']);

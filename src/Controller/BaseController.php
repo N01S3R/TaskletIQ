@@ -4,6 +4,7 @@ namespace App\Controller;
 
 use App\View;
 use App\Entity\User;
+use App\Entity\Token;
 use App\Service\Auth;
 use App\Helpers\AuthHelpers;
 use Doctrine\ORM\EntityManager;
@@ -34,7 +35,7 @@ class BaseController
      */
     protected function createAuth(): Auth
     {
-        return new Auth($this->getRepository(User::class));
+        return new Auth($this->getRepository(User::class), $this->getRepository(Token::class));
     }
 
     /**
@@ -80,16 +81,6 @@ class BaseController
         return $this->entityManager->getRepository($entityClass);
     }
 
-    // /**
-    //  * Zwraca instancję repozytorium dla encji o nazwie $entityClass.
-    //  *
-    //  * @param string $entityClass Nazwa klasy encji
-    //  * @return object
-    //  */
-    // protected function getEntity(string $entityClass)
-    // {
-    //     return $this->entityManager->getRepository($entityClass);
-    // }
 
     /**
      * Sprawdza, czy aktualny użytkownik ma określoną rolę.

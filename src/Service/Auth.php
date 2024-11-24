@@ -4,6 +4,7 @@ namespace App\Service;
 
 use App\Repository\UserRepository;
 use App\Helpers\AuthHelpers;
+use App\Repository\TokenRepository;
 
 /**
  * Klasa do zarządzania logowaniem, rejestracją i sesjami użytkowników.
@@ -11,15 +12,18 @@ use App\Helpers\AuthHelpers;
 class Auth
 {
     private UserRepository $userRepository;
+    private TokenRepository $tokenRepository;
 
     /**
      * Konstruktor klasy Auth.
      * 
      * @param UserRepository $userRepository Instancja repozytorium użytkowników
+     * @param TokenRepository $tokenRepository Instancja repozytorium tokenów
      */
-    public function __construct(UserRepository $userRepository)
+    public function __construct(UserRepository $userRepository, TokenRepository $tokenRepository)
     {
         $this->userRepository = $userRepository;
+        $this->tokenRepository = $tokenRepository;
     }
 
     /**
@@ -34,7 +38,6 @@ class Auth
     {
         $login = AuthHelpers::sanitizeInput($login);
         $password = AuthHelpers::sanitizeInput($password);
-        var_dump($login, $password);
         if (AuthHelpers::validatePassword($password)) {
             $user = $this->userRepository->findByLogin($login);
 
@@ -81,34 +84,39 @@ class Auth
      * @param string $email Adres email
      * @param string $username Nazwa użytkownika
      * @param string $password Hasło użytkownika
-     * @param string $registrationCode Kod rejestracyjny
+     * @param string $registrationCode Kod rejestracyjny (opcjonalnie)
+     * @param string $avatar Ścieżka do awatara
      * @param string $role Rola użytkownika
      * 
      * @return bool Zwraca true, jeśli rejestracja powiodła się, w przeciwnym razie false
      */
-    public function register(string $name, string $email, string $username, string $password, string $registrationCode, string $avatar, string $role): void
+    public function register(string $name, string $email, string $username, string $password, string $avatar, string $role, string $registrationCode = ''): bool
     {
         $name = AuthHelpers::sanitizeInput($name);
         $email = AuthHelpers::sanitizeInput($email);
         $username = AuthHelpers::sanitizeInput($username);
         $password = AuthHelpers::sanitizeInput($password);
-        $registrationCode = AuthHelpers::sanitizeInput($registrationCode);
         $avatar = AuthHelpers::sanitizeInput($avatar);
         $role = AuthHelpers::sanitizeInput($role);
-        var_dump($name, $email, $username, $password, $registrationCode, $avatar, $role);
-        // if (AuthHelpers::validatePassword($password) && $this->isValidUsernameAndEmail($username, $email)) {
-        //     $hashedPassword = password_hash($password, PASSWORD_BCRYPT);
-        //     $this->userRepository->createUser($name, $email, $username, $password, $avatar, $role, $registrationCode);
 
-        //     return true;
-        // }
+        if (empty($registrationCode)) {
+            $registrationCode = $this->generateRegistrationCode($username);
+        } else {
+            $registrationCode = $this->tokenRepository->getUserTokenByToken($registrationCode);
+        }
 
-        // $code = $this->userRepository->isRegistrationCodeUnique($registrationCode);
-        // if ($code) {
-        //     $registrationCode = $this->generateRegistrationCode($username);
-        //     $role = 'creator';
-        // }
-        // return false;
+        if (
+            AuthHelpers::validateFullName($name) &&
+            AuthHelpers::validateEmail($email, $this->userRepository) &&
+            AuthHelpers::validateUsername($username, $this->userRepository) &&
+            AuthHelpers::validatePassword($password)
+        ) {
+
+            $this->userRepository->createUser($name, $email, $username, $password, $avatar, $role, $registrationCode);
+            return true;
+        }
+
+        return false;
     }
 
     /**
@@ -129,31 +137,6 @@ class Auth
     public function getUserRole(): ?string
     {
         return $_SESSION['user_role'] ?? null;
-    }
-
-    /**
-     * Sprawdza, czy nazwa użytkownika i email są unikalne.
-     * 
-     * @param string $username Nazwa użytkownika
-     * @param string $email Adres email
-     * 
-     * @return bool Zwraca true, jeśli nazwa użytkownika i email są unikalne, w przeciwnym razie false
-     */
-    private function isValidUsernameAndEmail(string $username, string $email): bool
-    {
-        if (strlen($username) > 11) {
-            return false;
-        }
-
-        if ($this->userRepository->findByEmail($email)) {
-            return false;
-        }
-
-        if ($this->userRepository->findByLogin($username)) {
-            return false;
-        }
-
-        return true;
     }
 
     /**

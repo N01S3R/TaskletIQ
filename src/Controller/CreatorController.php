@@ -95,6 +95,7 @@ class CreatorController extends BaseController
                 'pageTitle' => 'Generuj kod użytkownikowi',
                 'token' => $registrationToken,
                 'users' => $users,
+                'baseUrl' => $_ENV['BASE_URL']
             ];
             $this->render('creator/creator_registration_code', $data);
         } else {

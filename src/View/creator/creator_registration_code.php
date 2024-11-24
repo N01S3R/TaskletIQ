@@ -62,7 +62,7 @@
             <div class="col-md-3">
                 <div class="card shadow-lg">
                     <div class="card-header p-3">
-                        <h5 class="text-center">Zaproszeni Użytkownicy</h5>
+                        <h5 class="text-center">Zaproszeni Użytkownicy ({{ users.length }})</h5>
                     </div>
                     <div class="card-body custom-row-code" ref="usersList" style="position: relative;">
                         <div>
@@ -109,6 +109,7 @@
                 loading: true,
                 token: '<?= $data["token"] ?>',
                 users: <?= json_encode($data['users']); ?>,
+                baseUrl: <?= json_encode($data['baseUrl']); ?>,
                 links: [],
                 load: false,
                 deleteIndex: null
@@ -138,7 +139,7 @@
                         if (response.data.success) {
                             const newToken = {
                                 token_id: response.data.token_id,
-                                token: response.data.token,
+                                token: this.baseUrl + response.data.token,
                                 expiration: response.data.expiration
                             };
                             this.links.push(newToken);
@@ -158,7 +159,7 @@
                         if (response.data.links) {
                             this.links = response.data.links.map(link => ({
                                 ...link,
-                                token: link.token
+                                token: `${this.baseUrl}register/${link.token}`
                             }));
                         } else {
                             console.error('Nie udało się pobrać linków');

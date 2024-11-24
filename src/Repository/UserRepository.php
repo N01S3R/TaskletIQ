@@ -317,13 +317,12 @@ class UserRepository extends EntityRepository
      */
     public function updateUser(int $userId, ?string $username, ?string $email, ?string $login, ?string $avatar, ?string $role): bool
     {
-        $user = $this->find($userId); // Znajdujemy użytkownika po ID
+        $user = $this->find($userId);
 
         if (!$user) {
-            return false; // Jeśli użytkownik nie istnieje, zwracamy false
+            return false;
         }
 
-        // Aktualizujemy dane użytkownika tylko wtedy, gdy nowe wartości są różne
         if ($username !== null) {
             $user->setUsername($username);
         }
@@ -340,10 +339,9 @@ class UserRepository extends EntityRepository
             $user->setRole($role);
         }
 
-        // Zapisujemy zmiany w bazie danych
         $this->_em->flush();
 
-        return true; // Zwracamy true, jeśli aktualizacja powiodła się
+        return true;
     }
 
     /**

@@ -11,7 +11,10 @@ $webRoutes = [
     ],
     '/register' => [
         'GET' => 'RegisterController@index',
-        'POST' => 'RegisterController@register'
+        'POST' => 'RegisterController@registerUser'
+    ],
+    '/register/([\w-]+)' => [
+        'GET' => 'RegisterController@index',
     ],
     '/logout' => [
         'GET' => 'SiteController@logout',
