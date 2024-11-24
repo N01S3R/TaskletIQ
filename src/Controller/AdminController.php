@@ -209,26 +209,18 @@ class AdminController extends BaseController
             // Zbieranie danych z formularza
             $name = $data['user_name'];
             $email = $data['user_email'];
-            $login = $data['user_login'];
+            $username = $data['user_login'];
             $password = $this->generateRandomPassword();
             $avatar = $data['user_avatar'];
             $role = $data['user_role'];
-            $registrationCode = false;
-            if ($name && $email && $login) {
+            $registrationCode = '';
 
-                $success = $this->auth->register($name, $email, $login, $password, $registrationCode, $avatar, $role);
+            if ($name && $email && $username) {
+                $success = $this->auth->register($name, $email, $username, $password, $avatar, $role, $registrationCode);
 
-                if ($success) {
-                    $response = [
-                        'status' => 'success',
-                        'message' => 'Użytkownik został dodany pomyślnie.',
-                    ];
-                } else {
-                    $response = [
-                        'status' => 'error',
-                        'message' => 'Użytkownik o podanym emailu lub loginie już istnieje.'
-                    ];
-                }
+                $response = $success
+                    ? ['status' => 'success', 'message' => 'Użytkownik został dodany pomyślnie.']
+                    : ['status' => 'error', 'message' => 'Użytkownik o podanym emailu lub loginie już istnieje.'];
             } else {
                 $response = [
                     'status' => 'error',
@@ -237,14 +229,9 @@ class AdminController extends BaseController
             }
             echo json_encode($response);
         } else {
-            $response = [
-                'status' => 'error',
-                'message' => 'Nie masz uprawnień.'
-            ];
-            echo json_encode($response);
+            echo json_encode(['status' => 'error', 'message' => 'Nie masz uprawnień.']);
         }
     }
-
 
     /**
      * Generuje losowe hasło.
