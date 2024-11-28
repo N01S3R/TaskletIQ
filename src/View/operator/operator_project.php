@@ -31,7 +31,7 @@
                                 <h4 class="card-title">{{item.task_name}}</h4>
                                 <p class="card-text">{{item.task_description}}</p>
                                 <div class="text-center">
-                                    <a :href="`http://todolist.t/operator/task/${item.task_id}`" class="btn btn-primary">Przejdź do zadania</a>
+                                    <a :href="`/operator/task/${item.task_id}`" class="btn btn-primary">Przejdź do zadania</a>
                                 </div>
                             </div>
                         </div>
@@ -52,7 +52,7 @@
                                 <h4 class="card-title">{{item.task_name}}</h4>
                                 <p class="card-text">{{item.task_description}}</p>
                                 <div class="text-center">
-                                    <a :href="`http://todolist.t/operator/task/${item.task_id}`" class="btn btn-primary">Przejdź do zadania</a>
+                                    <a :href="`/operator/task/${item.task_id}`" class="btn btn-primary">Przejdź do zadania</a>
                                 </div>
                             </div>
                         </div>
@@ -73,7 +73,7 @@
                                 <h4 class="card-title">{{item.task_name}}</h4>
                                 <p class="card-text">{{item.task_description}}</p>
                                 <div class="text-center">
-                                    <a :href="`http://todolist.t/operator/task/${item.task_id}`" class="btn btn-primary">Przejdź do zadania</a>
+                                    <a :href="`/operator/task/${item.task_id}`" class="btn btn-primary">Przejdź do zadania</a>
                                 </div>
                             </div>
                         </div>
@@ -94,7 +94,7 @@
                                 <h4 class="card-title">{{item.task_name}}</h4>
                                 <p class="card-text">{{item.task_description}}</p>
                                 <div class="text-center">
-                                    <a :href="`http://todolist.t/operator/task/${item.task_id}`" class="btn btn-primary">Przejdź do zadania</a>
+                                    <a :href="`/operator/task/${item.task_id}`" class="btn btn-primary">Przejdź do zadania</a>
                                 </div>
                             </div>
                         </div>

@@ -29,7 +29,7 @@ class RegisterController extends BaseController
         if ($this->auth->getUserId()) {
             $userRole = $this->auth->getUserRole();
             $redirectUrl = ($userRole === 'creator') ? 'creator/dashboard' : 'operator/dashboard';
-            header('Location: ' . getenv('BASE_URL') . $redirectUrl);
+            header('Location: ' . $_ENV['BASE_URL'] . $redirectUrl);
             exit;
         }
 

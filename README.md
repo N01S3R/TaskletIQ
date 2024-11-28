@@ -28,9 +28,9 @@ cd taskleiq
 ```
 ### 2. Konfiguracja serwera
 
-1. Skonfiguruj środowisko PHP na swoim serwerze (wymagane PHP 7.4 lub nowsze).
+1. Skonfiguruj środowisko PHP na swoim serwerze (wymagane PHP 8.1.29 lub nowsze).
 2. Utwórz bazę danych MySQL i zaimportuj do niej plik `todolist.sql` z folderu projektu.
-3. Skonfiguruj plik `config.php`, w którym ustawisz dane dostępowe do bazy danych.
+3. Skonfiguruj plik `.env`, w którym ustawisz dane dostępowe do bazy danych.
 
 ### 3. Instalacja zależności
 
@@ -42,6 +42,30 @@ Aplikacja nie wymaga dodatkowych narzędzi do instalacji. Wystarczy mieć zainst
 2. **Projekty**: Utwórz nowy projekt, dodaj zadania i przypisz użytkowników.
 3. **Panel administratora**: Zaloguj się jako administrator, aby zarządzać użytkownikami oraz przydzielać role.
 4. **Zaproszenia**: Generuj tokeny zaproszeń, aby zaprosić nowych użytkowników do projektu.
+
+# Dane logowania
+
+Dane logowania dla różnych ról w systemie:
+
+---
+
+## 🔑 Administrator
+- **Login:** `admin`
+- **Hasło:** `Password1`
+
+---
+
+## ✨ Twórca (Creator)
+- **Login:** `creator`
+- **Hasło:** `Password1`
+
+---
+
+## ⚙️ Operator
+- **Login:** `operator`
+- **Hasło:** `Password1`
+
+---
 
 ## Licencja
 

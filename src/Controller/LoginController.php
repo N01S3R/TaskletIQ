@@ -14,7 +14,7 @@ class LoginController extends BaseController
         if ($this->auth->getUserId()) {
             // Sprawdzanie, czy użytkownik jest już zalogowany
             $userRole = $this->auth->getUserRole();
-            $redirectUrl = getenv('BASE_URL') . $userRole . '/dashboard';
+            $redirectUrl = $_ENV['BASE_URL'] . $userRole . '/dashboard';
             header('Location: ' . $redirectUrl);
             exit;
         } else {
@@ -38,7 +38,7 @@ class LoginController extends BaseController
 
             if ($user) {
                 $userRole = $user->getRole();
-                $redirectUrl = getenv('BASE_URL') . $userRole . '/dashboard';
+                $redirectUrl = $_ENV['BASE_URL'] . $userRole . '/dashboard';
                 header('Location: ' . $redirectUrl);
                 exit;
             } else {
