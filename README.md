@@ -51,19 +51,19 @@ Dane logowania dla różnych ról w systemie:
 
 ## 🔑 Administrator
 - **Login:** `admin`
-- **Hasło:** `Password1`
+- **Hasło:** `Password1.`
 
 ---
 
 ## ✨ Twórca (Creator)
 - **Login:** `creator`
-- **Hasło:** `Password1`
+- **Hasło:** `Password1.`
 
 ---
 
 ## ⚙️ Operator
 - **Login:** `operator`
-- **Hasło:** `Password1`
+- **Hasło:** `Password1.`
 
 ---
 
