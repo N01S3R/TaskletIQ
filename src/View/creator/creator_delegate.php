@@ -14,6 +14,8 @@
         </nav>
         <header class="d-flex justify-content-end align-items-center m-4">
             <div>
+                <button @click="startTutorial" class="btn btn-info me-2">Rozpocznij tutorial</button>
+                <button @click="resetTutorial" class="btn btn-warning">Resetuj tutorial</button>
                 <button type="button" class="btn btn-secondary me-2" data-bs-toggle="tooltip" data-bs-placement="bottom" data-bs-html="true" title="<strong>Jak przypisać użytkownika do zadania:</strong><ul class='text-start list-group list-group-numbered'><li class='list-group-item'>Zaznacz zadanie.</li><li class='list-group-item'>Zaznacz użytkownika.</li><li class='list-group-item'>Kliknij <em>+ Przypisz</em>.</li></ul>">
                     Pomoc
                 </button>
@@ -175,10 +177,87 @@
                     selectedTaskId: null,
                     pageTitle: <?php echo json_encode($data['pageTitle']); ?>,
                     userProjects: <?php echo json_encode($data["userProjects"]); ?>,
-                    users: <?php echo json_encode($data["users"]); ?>
+                    users: <?php echo json_encode($data["users"]); ?>,
+                    csrfToken: <?php echo json_encode($data['csrfToken']); ?>,
+                    tutorialCompleted: false,
+                    tutorialSteps: [{
+                            selector: '.btn-secondary',
+                            content: 'Kliknij, aby uzyskać pomoc na temat przypisywania użytkownika do zadania.',
+                        },
+                        {
+                            selector: '.card-header.p-3',
+                            content: 'Tutaj znajdziesz liczbę projektów użytkownika.',
+                        },
+                        {
+                            selector: '.card-body h5.card-title',
+                            content: 'Tutaj znajduje się zadanie do przypisania wraz z datą jego utworzenia.',
+                        },
+                        {
+                            selector: '.card-header h5',
+                            content: 'Lista użytkowników przypisanych do projektu.',
+                        },
+                        {
+                            selector: '.card-body.d-flex.align-items-center',
+                            content: 'Avatar użytkownika oraz jego login.',
+                        },
+                        {
+                            selector: '.highlight-on-hover',
+                            content: 'Kliknij, aby usunąć użytkownika z zadania.',
+                        },
+                    ],
                 };
             },
             methods: {
+                showStep(stepIndex) {
+                    if (stepIndex >= this.tutorialSteps.length) {
+                        this.tutorialCompleted = true;
+                        localStorage.setItem('tutorialCompleted', 'true');
+                        this.showNotification('info', 'Tutorial zakończony!');
+                        return;
+                    }
+
+                    const step = this.tutorialSteps[stepIndex];
+                    const element = document.querySelector(step.selector);
+
+                    if (!element) {
+                        console.warn(`Element dla kroku ${stepIndex} (${step.selector}) nie został znaleziony.`);
+                        return;
+                    }
+
+                    // Inicjalizacja tooltipa Bootstrap
+                    const tooltip = new bootstrap.Tooltip(element, {
+                        title: step.content,
+                        placement: 'top',
+                        trigger: 'manual',
+                    });
+
+                    tooltip.show();
+
+                    // Ukryj tooltip po kliknięciu w element
+                    element.addEventListener('click', () => {
+                        tooltip.hide();
+                        tooltip.dispose();
+                        this.currentStep++;
+                        this.showStep(this.currentStep);
+                    }, {
+                        once: true
+                    });
+                },
+                startTutorial() {
+                    const completed = localStorage.getItem('tutorialCompleted');
+                    if (completed === 'true') {
+                        this.showNotification('info', 'Tutorial już został ukończony.');
+                        return;
+                    }
+
+                    this.currentStep = 0;
+                    this.showStep(this.currentStep);
+                },
+                resetTutorial() {
+                    localStorage.removeItem('tutorialCompleted');
+                    this.tutorialCompleted = false;
+                    this.showNotification('info', 'Tutorial został zresetowany.');
+                },
                 initializeScrollbars() {
                     this.$nextTick(() => {
                         const projectList = this.$refs.projectList;
@@ -231,6 +310,7 @@
                     const dataToSend = {
                         userId: this.selectedUserId,
                         taskId: this.selectedTaskId,
+                        csrf_token: this.csrfToken,
                     };
 
                     axios.post(endpoint, dataToSend)
@@ -272,6 +352,7 @@
                     const unassignData = {
                         userId: userId,
                         taskId: taskId,
+                        csrf_token: this.csrfToken,
                     };
 
                     fetch(unassignEndpoint, {

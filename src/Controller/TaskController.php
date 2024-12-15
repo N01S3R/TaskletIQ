@@ -7,6 +7,7 @@ use App\Entity\Task;
 use App\Entity\User;
 use App\Entity\Project;
 use App\Entity\TaskUser;
+use App\Helpers\AuthHelpers;
 
 /**
  * Kontroler obsługujący operacje na zadaniach.
@@ -292,61 +293,94 @@ class TaskController extends BaseController
 
     /**
      * Przypisuje użytkownika do zadania.
-     * Obsługuje dane JSON z żądania i sprawdza uprawnienia.
+     * Obsługuje dane JSON z żądania, sprawdza uprawnienia oraz waliduje dane.
      */
     public function assignUserToTask(): void
     {
         $responseData = [];
+
+        // Sprawdzenie, czy użytkownik jest zalogowany
         if (!$this->auth->getUserId()) {
+            http_response_code(401); // Unauthorized
             $responseData['error'] = 'Brak odpowiednich uprawnień do wykonania tej operacji.';
             echo json_encode($responseData);
             return;
         }
 
-        $taskRepository = $this->getRepository(Task::class);
-        $userRepository = $this->getRepository(User::class);
-        $taskUserRepository = $this->getRepository(TaskUser::class);
-        $requestData = json_decode(file_get_contents('php://input'), true);
-        $taskId = $requestData['taskId'] ?? null;
-        $userId = $requestData['userId'] ?? null;
+        // Pobranie danych z żądania
+        $postData = json_decode(file_get_contents('php://input'), true);
+        if (!$postData) {
+            http_response_code(400); // Bad Request
+            $responseData['error'] = 'Nieprawidłowy format danych.';
+            echo json_encode($responseData);
+            return;
+        }
+
+        // Sprawdzenie tokena CSRF
+        if (empty($postData['csrf_token']) || !AuthHelpers::verifyCSRFToken($postData['csrf_token'])) {
+            http_response_code(403); // Forbidden
+            $responseData['error'] = 'Nieprawidłowy token CSRF.';
+            echo json_encode($responseData);
+            return;
+        }
+
+        // Walidacja danych wejściowych
+        $taskId = $postData['taskId'] ?? null;
+        $userId = $postData['userId'] ?? null;
 
         if (!$taskId || !$userId) {
+            http_response_code(400); // Bad Request
             $responseData['error'] = 'Nie podano prawidłowego ID zadania lub użytkownika.';
             echo json_encode($responseData);
             return;
         }
 
+        // Pobranie repozytoriów
+        $taskRepository = $this->getRepository(Task::class);
+        $userRepository = $this->getRepository(User::class);
+        $taskUserRepository = $this->getRepository(TaskUser::class);
+
+        // Pobranie zadania
         $task = $taskRepository->find($taskId);
         if (!$task) {
+            http_response_code(404); // Not Found
             $responseData['error'] = 'Zadanie nie znalezione.';
             echo json_encode($responseData);
             return;
         }
 
+        // Pobranie użytkownika
         $user = $userRepository->find($userId);
         if (!$user) {
+            http_response_code(404); // Not Found
             $responseData['error'] = "Użytkownik o ID '{$userId}' nie znaleziony.";
             echo json_encode($responseData);
             return;
         }
 
-        $isUserAssigned = $taskUserRepository->isUserAssignedToTask($userId, $taskId);
-        if ($isUserAssigned) {
-            $responseData['error'] = "Użytkownik '{$user->getUsername()}' jest już przypisany do zadania " . $task->getTaskName();
+        // Sprawdzenie, czy użytkownik jest już przypisany do zadania
+        if ($taskUserRepository->isUserAssignedToTask($userId, $taskId)) {
+            http_response_code(409); // Conflict
+            $responseData['error'] = "Użytkownik '{$user->getUsername()}' jest już przypisany do zadania '{$task->getTaskName()}'.";
             echo json_encode($responseData);
             return;
         }
 
+        // Sprawdzenie limitu użytkowników w zadaniu
         $assignedUsersCount = $taskUserRepository->getAssignedUsersCount($taskId);
         if ($assignedUsersCount >= 12) {
-            $responseData['error'] = "Osiągnięto maksymalną liczbę przypisanych użytkowników do tego zadania.";
+            http_response_code(409); // Conflict
+            $responseData['error'] = 'Osiągnięto maksymalną liczbę przypisanych użytkowników do tego zadania.';
             echo json_encode($responseData);
             return;
         }
 
+        // Przypisanie użytkownika do zadania
         $taskUserRepository->assignTaskToUser($task, $user);
 
-        $responseData['success'] = 'Użytkownik "' . $user->getUsername() . '" został przypisany do zadania "' . $task->getTaskName() . '"';
+        // Przygotowanie odpowiedzi
+        http_response_code(200); // OK
+        $responseData['success'] = "Użytkownik '{$user->getUsername()}' został przypisany do zadania '{$task->getTaskName()}'.";
         $responseData['user'] = [
             'user_id' => $user->getUserId(),
             'user_login' => $user->getLogin(),
@@ -358,48 +392,85 @@ class TaskController extends BaseController
 
     /**
      * Usuwa przypisanie użytkownika do zadania.
-     * Sprawdza uprawnienia i dane wejściowe przed wykonaniem operacji.
+     * Sprawdza uprawnienia, dane wejściowe i token CSRF przed wykonaniem operacji.
      */
     public function unassignUserFromTask(): void
     {
         $responseData = [];
+
+        // Sprawdzenie, czy użytkownik jest zalogowany
         if (!$this->auth->getUserId()) {
+            http_response_code(401); // Unauthorized
             $responseData['error'] = 'Brak odpowiednich uprawnień do wykonania tej operacji.';
             echo json_encode($responseData);
             return;
         }
 
-        $taskRepository = $this->getRepository(Task::class);
-        $userRepository = $this->getRepository(User::class);
-        $taskUserRepository = $this->getRepository(TaskUser::class);
+        // Pobranie danych z żądania
         $requestData = json_decode(file_get_contents('php://input'), true);
+        if (!$requestData) {
+            http_response_code(400); // Bad Request
+            $responseData['error'] = 'Nieprawidłowy format danych.';
+            echo json_encode($responseData);
+            return;
+        }
+
+        // Sprawdzenie tokena CSRF
+        if (empty($requestData['csrf_token']) || !AuthHelpers::verifyCSRFToken($requestData['csrf_token'])) {
+            http_response_code(403); // Forbidden
+            $responseData['error'] = 'Nieprawidłowy token CSRF.';
+            echo json_encode($responseData);
+            return;
+        }
+
+        // Walidacja danych wejściowych
         $taskId = $requestData['taskId'] ?? null;
         $userId = $requestData['userId'] ?? null;
 
+        if (!$taskId || !$userId) {
+            http_response_code(400); // Bad Request
+            $responseData['error'] = 'Nie podano prawidłowego ID zadania lub użytkownika.';
+            echo json_encode($responseData);
+            return;
+        }
+
+        // Pobranie repozytoriów
+        $taskRepository = $this->getRepository(Task::class);
+        $userRepository = $this->getRepository(User::class);
+        $taskUserRepository = $this->getRepository(TaskUser::class);
+
+        // Pobranie zadania
         $task = $taskRepository->find($taskId);
         if (!$task) {
+            http_response_code(404); // Not Found
             $responseData['error'] = 'Zadanie nie znalezione.';
             echo json_encode($responseData);
             return;
         }
 
+        // Pobranie użytkownika
         $user = $userRepository->find($userId);
         if (!$user) {
+            http_response_code(404); // Not Found
             $responseData['error'] = "Użytkownik o ID '{$userId}' nie znaleziony.";
             echo json_encode($responseData);
             return;
         }
 
-        $isUserAssigned = $taskUserRepository->isUserAssignedToTask($userId, $taskId);
-        if (!$isUserAssigned) {
-            $responseData['error'] = "Użytkownik '{$user->getUsername()}' nie jest przypisany do zadania " . $task->getTaskName();
+        // Sprawdzenie, czy użytkownik jest przypisany do zadania
+        if (!$taskUserRepository->isUserAssignedToTask($userId, $taskId)) {
+            http_response_code(409); // Conflict
+            $responseData['error'] = "Użytkownik '{$user->getUsername()}' nie jest przypisany do zadania '{$task->getTaskName()}'.";
             echo json_encode($responseData);
             return;
         }
 
+        // Usunięcie przypisania
         $taskUserRepository->removeUserAssignment($taskId, $userId);
 
-        $responseData['success'] = 'Przypisanie "' . $task->getTaskName() . '" do "' . $user->getUsername() . '" zostało usunięte';
+        // Przygotowanie odpowiedzi
+        http_response_code(200); // OK
+        $responseData['success'] = "Przypisanie użytkownika '{$user->getUsername()}' do zadania '{$task->getTaskName()}' zostało usunięte.";
         $responseData['user'] = [
             'user_id' => $user->getUserId(),
             'user_login' => $user->getLogin(),
@@ -411,37 +482,72 @@ class TaskController extends BaseController
     /**
      * Usuwa zadanie na podstawie jego ID.
      *
-     * @param int $taskId Identyfikator zadania do usunięcia
+     * @param int $taskId Identyfikator zadania do usunięcia.
      * @return void
      */
     public function deleteTask(int $taskId): void
     {
-        $userId = $this->auth->getUserId();
+        $responseData = [];
 
-        // Sprawdź rolę użytkownika
-        if (!$this->checkRole('creator')) {
-            echo json_encode(['success' => false, 'error' => 'Brak uprawnień do usunięcia zadania.']);
+        // Pobranie ID zalogowanego użytkownika
+        $userId = $this->auth->getUserId();
+        if (!$userId) {
+            http_response_code(401); // Unauthorized
+            $responseData['error'] = 'Brak odpowiednich uprawnień do wykonania tej operacji.';
+            echo json_encode($responseData);
             return;
         }
 
+        // Sprawdzenie roli użytkownika
+        if (!$this->checkRole('creator')) {
+            http_response_code(403); // Forbidden
+            $responseData['error'] = 'Brak uprawnień do usunięcia zadania.';
+            echo json_encode($responseData);
+            return;
+        }
+
+        // Pobranie danych żądania
+        $requestData = json_decode(file_get_contents('php://input'), true);
+        if (!$requestData) {
+            http_response_code(400); // Bad Request
+            $responseData['error'] = 'Nieprawidłowy format danych.';
+            echo json_encode($responseData);
+            return;
+        }
+
+        // Weryfikacja tokena CSRF
+        if (empty($requestData['csrf_token']) || !AuthHelpers::verifyCSRFToken($requestData['csrf_token'])) {
+            http_response_code(403); // Forbidden
+            $responseData['error'] = 'Nieprawidłowy token CSRF.';
+            echo json_encode($responseData);
+            return;
+        }
+
+        // Pobranie repozytorium zadania
         $taskRepository = $this->getRepository(Task::class);
 
-        // Pobierz szczegóły zadania przed jego usunięciem
+        // Pobranie szczegółów zadania
         $task = $taskRepository->getTaskById($taskId, $userId);
-
         if (!$task) {
-            echo json_encode(['success' => false, 'error' => 'Zadanie o podanym identyfikatorze nie istnieje.']);
+            http_response_code(404); // Not Found
+            $responseData['error'] = 'Zadanie o podanym identyfikatorze nie istnieje.';
+            echo json_encode($responseData);
             return;
         }
 
-        // Usuń zadanie
+        // Usunięcie zadania
         $result = $taskRepository->deleteTask($taskId, $userId);
-
-        // Jeśli zadanie zostało usunięte poprawnie, zwróć odpowiednią odpowiedź (np. JSON)
-        if ($result) {
-            echo json_encode(['success' => true, 'message' => 'Zadanie "' . $task->getTaskName() . '" zostało usunięte.']);
-        } else {
-            echo json_encode(['success' => false, 'error' => 'Wystąpił błąd podczas usuwania zadania.']);
+        if (!$result) {
+            http_response_code(500); // Internal Server Error
+            $responseData['error'] = 'Wystąpił błąd podczas usuwania zadania.';
+            echo json_encode($responseData);
+            return;
         }
+
+        // Przygotowanie odpowiedzi
+        http_response_code(200); // OK
+        $responseData['success'] = true;
+        $responseData['message'] = 'Zadanie "' . $task->getTaskName() . '" zostało usunięte.';
+        echo json_encode($responseData);
     }
 }

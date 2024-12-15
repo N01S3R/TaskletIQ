@@ -5,6 +5,7 @@ namespace App\Controller;
 use App\Entity\Task;
 use App\Entity\User;
 use App\Entity\Project;
+use App\Helpers\AuthHelpers;
 
 class ProjectController extends BaseController
 {
@@ -108,10 +109,14 @@ class ProjectController extends BaseController
             $projectRepository = $this->getRepository(Project::class);
             $projectsWithTasks = $projectRepository->getProjectWithTasksAndUsers($userId);
 
+            // Generowanie tokena CSRF
+            $csrf = $_SESSION['csrf_token'] = AuthHelpers::generateCSRFToken();
+
             // Przygotowanie danych do przekazania do widoku
             $data = [
                 'pageTitle' => 'Wszystkie projekty',
                 'userProjects' => $projectsWithTasks, // Przekazujemy projekty z zadaniami
+                'csrfToken' => $csrf,
             ];
 
             // Renderowanie widoku
@@ -131,8 +136,16 @@ class ProjectController extends BaseController
         $responseData = [];
         $postData = json_decode(file_get_contents('php://input'), true);
 
-        if ($postData !== null && isset($postData['projectName']) && !empty($postData['projectName'])) {
-            $projectName = $postData['projectName'];
+        // Sprawdzenie CSRF tokena
+        if (!isset($postData['csrf_token']) || !AuthHelpers::verifyCSRFToken($postData['csrf_token'])) {
+            http_response_code(403);
+            $responseData['error'] = 'Nieprawidłowy token CSRF';
+            echo json_encode($responseData);
+            exit;
+        }
+
+        if ($postData !== null && isset($postData['project_name']) && !empty($postData['project_name'])) {
+            $projectName = $postData['project_name'];
 
             // Utworzenie nowego projektu
             $project = new Project();
@@ -158,6 +171,14 @@ class ProjectController extends BaseController
         $responseData = [];
         $putData = json_decode(file_get_contents('php://input'), true);
 
+        // Sprawdzenie CSRF tokena
+        if (!isset($putData['csrf_token']) || !AuthHelpers::verifyCSRFToken($putData['csrf_token'])) {
+            http_response_code(403);
+            $responseData['error'] = 'Nieprawidłowy token CSRF';
+            echo json_encode($responseData);
+            exit;
+        }
+
         if ($putData !== null && isset($putData['project_name']) && !empty($putData['project_name'])) {
             $projectName = $putData['project_name'];
 
@@ -177,7 +198,7 @@ class ProjectController extends BaseController
                     $updatedProject = [
                         'project_id' => $project->getProjectId(),
                         'project_name' => $project->getProjectName(),
-                        'created_at' => $project->getCreatedAt()->format('Y-m-d H:i:s'), // lub inny format daty
+                        // 'created_at' => $project->getCreatedAt()->format('Y-m-d H:i:s'),
                         'tasks' => [],  // Dodajemy tablicę na zadania
                     ];
 
@@ -216,6 +237,13 @@ class ProjectController extends BaseController
     public function deleteProject($id)
     {
         $userId = $this->auth->getUserId();
+        $deleteData = json_decode(file_get_contents('php://input'), true);
+        if (!isset($deleteData['csrf_token']) || !AuthHelpers::verifyCSRFToken($deleteData['csrf_token'])) {
+            http_response_code(403);
+            $responseData['error'] = 'Nieprawidłowy token CSRF';
+            echo json_encode($responseData);
+            exit;
+        }
 
         // Pobranie projektu na podstawie ID
         $project = $this->entityManager->getRepository(Project::class)->findOneBy([
@@ -232,7 +260,7 @@ class ProjectController extends BaseController
             $message = 'Nie udało się usunąć projektu lub nie masz do niego uprawnień.';
         }
 
-        echo json_encode(['success' => $message]);
+        echo json_encode(['success' => $id]);
         exit;
     }
 }

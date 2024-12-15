@@ -112,7 +112,8 @@
                 baseUrl: <?= json_encode($data['baseUrl']); ?>,
                 links: [],
                 load: false,
-                deleteIndex: null
+                deleteIndex: null,
+                csrfToken: <?php echo json_encode($data['csrfToken']); ?>,
             };
         },
         methods: {
@@ -134,13 +135,17 @@
             },
             generateToken() {
                 const url = '/api/code/' + this.token;
-                axios.post(url)
+
+                axios.post(url, {
+                        csrf_token: this.csrfToken
+                    })
                     .then(response => {
                         if (response.data.success) {
                             const newToken = {
                                 token_id: response.data.token_id,
                                 token: this.baseUrl + response.data.token,
-                                expiration: response.data.expiration
+                                expiration: response.data.expiration,
+                                csrf_token: this.csrfToken,
                             };
                             this.links.push(newToken);
                             this.showNotification('success', 'Token został wygenerowany pomyślnie.');
@@ -203,7 +208,12 @@
                     const linkId = link ? link.token_id : undefined;
                     if (linkId) {
                         const url = '/api/token/delete/' + linkId;
-                        axios.delete(url)
+
+                        axios.delete(url, {
+                                data: {
+                                    csrf_token: this.csrfToken
+                                }
+                            })
                             .then(response => {
                                 this.links.splice(this.deleteIndex, 1);
                                 this.deleteIndex = null;
