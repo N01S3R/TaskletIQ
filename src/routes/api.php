@@ -1,64 +1,72 @@
 <?php
 
 $apiRoutes = [
-    // Site
+    // SITE: Operacje związane z walidacją
     '/api/validate-field' => [
-        'POST' => 'RegisterController@validateSignupData'
+        'POST' => 'ApiRegisterController@validateSignupData' // Walidacja danych rejestracyjnych
     ],
-    // Creator
-    '/api/project/add' => [
-        'POST' => 'ProjectController@createProject'
+    '/register' => [
+        'POST' => 'ApiRegisterController@registerUser'
     ],
-    '/api/project/update/(\d+)' => [
-        'PUT' => 'ProjectController@updateProject'
-    ],
-    '/api/project/delete/(\d+)' => [
-        'DELETE' => 'ProjectController@deleteProject'
-    ],
-    '/api/task/add' => [
-        'POST' => 'TaskController@createTask'
-    ],
-    '/api/task/update/(\d+)' => [
-        'PUT' => 'TaskController@updateTask'
-    ],
-    '/api/task/delete/(\d+)' => [
-        'DELETE' => 'TaskController@deleteTask'
-    ],
+    // CREATOR: Zarządzanie tokenami, linkami oraz przypisywaniem użytkowników
     '/api/code/([\w-]+)' => [
-        'POST' => 'CreatorController@generateToken'
+        'POST' => 'ApiCreatorController@generateToken' // Generowanie tokenu na podstawie kodu
     ],
     '/api/links' => [
-        'GET' => 'CreatorController@getLinks'
+        'GET' => 'ApiCreatorController@getLinks' // Pobieranie linków przypisanych do twórcy
     ],
     '/api/token/delete/(\d+)' => [
-        'DELETE' => 'CreatorController@deleteToken'
+        'DELETE' => 'ApiCreatorController@deleteToken' // Usuwanie tokenu na podstawie ID
     ],
     '/api/creator/assign' => [
-        'POST' => 'TaskController@assignUserToTask'
+        'POST' => 'ApiTaskController@assignUserToTask' // Przypisywanie użytkownika do zadania
     ],
     '/api/creator/unassign' => [
-        'POST' => 'TaskController@unassignUserFromTask'
+        'POST' => 'ApiTaskController@unassignUserFromTask' // Usuwanie przypisania użytkownika z zadania
     ],
-    // Operator
+
+    // PROJECT: Operacje CRUD na projektach
+    '/api/project/add' => [
+        'POST' => 'ApiProjectController@createProject' // Tworzenie nowego projektu
+    ],
+    '/api/project/update/(\d+)' => [
+        'PUT' => 'ApiProjectController@updateProject' // Aktualizacja projektu na podstawie ID
+    ],
+    '/api/project/delete/(\d+)' => [
+        'DELETE' => 'ApiProjectController@deleteProject' // Usuwanie projektu na podstawie ID
+    ],
+
+    // TASK: Operacje CRUD na zadaniach
+    '/api/task/add' => [
+        'POST' => 'ApiTaskController@createTask' // Tworzenie nowego zadania
+    ],
+    '/api/task/update/(\d+)' => [
+        'PUT' => 'ApiTaskController@updateTask' // Aktualizacja zadania na podstawie ID
+    ],
+    '/api/task/delete/(\d+)' => [
+        'DELETE' => 'ApiTaskController@deleteTask' // Usuwanie zadania na podstawie ID
+    ],
+
+    // OPERATOR: Zarządzanie statusami i hasłami
     '/api/status' => [
-        'POST' => 'OperatorController@changeTaskStatus'
+        'POST' => 'ApiTaskController@changeTaskStatus' // Zmiana statusu zadania
     ],
     '/api/change-password' => [
-        'POST' => 'OperatorController@changePassword'
+        'POST' => 'ApiOperatorController@changePassword' // Zmiana hasła użytkownika
     ],
-    // Admin
+
+    // ADMIN: Zarządzanie użytkownikami
     '/api/users' => [
-        'POST' => 'AdminController@allUsers',
-        'GET' => 'AdminController@reloadUsers'
+        'GET' => 'ApiAdminController@reloadUsers' // Pobieranie pełnej, zaktualizowanej listy użytkowników
     ],
     '/api/user/add' => [
-        'POST' => 'AdminController@addUser'
+        'POST' => 'ApiAdminController@addUser' // Dodawanie nowego użytkownika
     ],
     '/api/user/update/(\d+)' => [
-        'PUT' => 'AdminController@updateUser'
+        'PUT' => 'ApiAdminController@updateUser' // Aktualizacja danych użytkownika na podstawie ID
     ],
     '/api/user/delete/(\d+)' => [
-        'DELETE' => 'AdminController@deleteUser'
+        'DELETE' => 'ApiAdminController@deleteUser' // Usuwanie użytkownika na podstawie ID
     ],
 ];
 

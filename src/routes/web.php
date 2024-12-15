@@ -3,21 +3,20 @@
 $webRoutes = [
     // Site
     '/' => [
-        'GET' => 'SiteController@index'
+        'GET' => 'SiteController@displaySite'
     ],
     '/login' => [
-        'GET' => 'LoginController@index',
-        'POST' => 'LoginController@login'
+        'GET' => 'LoginController@displayLogin',
+        'POST' => 'LoginController@loginUser'
     ],
     '/register' => [
-        'GET' => 'RegisterController@index',
-        'POST' => 'RegisterController@registerUser'
+        'GET' => 'RegisterController@displayRegister',
     ],
     '/register/([\w-]+)' => [
-        'GET' => 'RegisterController@index',
+        'GET' => 'RegisterController@displayRegister',
     ],
     '/logout' => [
-        'GET' => 'SiteController@logout',
+        'GET' => 'LoginController@displayLogout',
     ],
 
     // Creator
@@ -48,7 +47,7 @@ $webRoutes = [
         'GET' => 'OperatorController@displayDashboard'
     ],
     '/operator/project/(\d+)' => [
-        'GET' => 'OperatorController@project'
+        'GET' => 'OperatorController@operatorProject'
     ],
     '/operator/task/([\w-]+)' => [
         'GET' => 'OperatorController@singleTask'

@@ -6,7 +6,7 @@ use App\Entity\User;
 
 class SiteController extends BaseController
 {
-    public function index()
+    public function displaySite()
     {
         // Sprawdzanie, czy użytkownik jest zalogowany
         if ($this->auth->getUserId()) {
@@ -38,26 +38,5 @@ class SiteController extends BaseController
         ];
 
         $this->render('home_page', $data);
-    }
-
-    public function logout()
-    {
-        $userId = $this->auth->getUserId() ?? null;
-
-        if ($userId) {
-            $userRepository = $this->getRepository(User::class);
-            $userRepository->setUserLoggedOut($userId);
-        }
-
-        session_unset();
-        session_destroy();
-
-        if (isset($_COOKIE[session_name()])) {
-            setcookie(session_name(), '', time() - 3600, '/');
-        }
-        unset($_COOKIE['users_login']);
-
-        header('Location: /login');
-        exit();
     }
 }

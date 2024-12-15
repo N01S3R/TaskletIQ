@@ -43,7 +43,7 @@ class OperatorController extends BaseController
      * @param int $projectId ID projektu
      * @return void
      */
-    public function project(int $projectId): void
+    public function operatorProject(int $projectId): void
     {
         if ($this->checkRole('operator')) {
             $projectRepository = $this->getRepository(Project::class);
@@ -68,61 +68,6 @@ class OperatorController extends BaseController
         } else {
             header('Location: /login');
             exit();
-        }
-    }
-
-    /**
-     * Zmienia status zadania na podstawie danych wejściowych.
-     *
-     * @return void
-     */
-    public function changeTaskStatus(array $data): void
-    {
-        if (!$this->checkRole('operator')) {
-            echo json_encode([
-                'status' => 'error',
-                'message' => 'Nie masz uprawnień'
-            ]);
-            return;
-        }
-
-        if (!isset($data['taskData'], $data['columnId'])) {
-            echo json_encode([
-                'status' => 'error',
-                'message' => 'Błędne dane wejściowe.'
-            ]);
-            return;
-        }
-
-        $taskId = (int)$data['taskData'];
-        $newProcess = (int)$data['columnId'];
-
-        $statusMap = [
-            0 => 'Nowy',
-            1 => 'Rozpoczęty',
-            2 => 'W trakcie',
-            3 => 'Ukończony',
-        ];
-
-        $newStatus = $statusMap[$newProcess] ?? 'Nieznany';
-
-        try {
-            // Pobierz repozytorium zadań
-            $taskRepository = $this->getRepository(Task::class);
-
-            // Zaktualizuj status zadania w bazie danych
-            $taskRepository->updateTaskProgress($taskId, $newStatus, $newProcess);
-
-            echo json_encode([
-                'status' => 'success',
-                'message' => 'Status zadania został zaktualizowany pomyślnie.'
-            ]);
-        } catch (PDOException $e) {
-            echo json_encode([
-                'status' => 'error',
-                'message' => 'Nie udało się zaktualizować statusu zadania.',
-                'error' => $e->getMessage()
-            ]);
         }
     }
 
@@ -172,6 +117,7 @@ class OperatorController extends BaseController
             exit();
         }
     }
+
     /**
      * Wyświetla ustawienia operatora.
      *
@@ -201,49 +147,6 @@ class OperatorController extends BaseController
         } else {
             header('Location: /login');
             exit();
-        }
-    }
-
-    /**
-     * Zmienia hasło użytkownika.
-     *
-     * @param array $data Dane wejściowe zawierające aktualne i nowe hasło.
-     * @return void
-     */
-    public function changePassword(array $data): void
-    {
-        if (!$this->checkRole('operator')) {
-            echo json_encode([
-                'status' => 'error',
-                'message' => 'Nie masz uprawnień.'
-            ]);
-            return;
-        }
-
-        if (!isset($data['currentPassword'], $data['newPassword'])) {
-            echo json_encode([
-                'status' => 'error',
-                'message' => 'Błędne dane wejściowe.'
-            ]);
-            return;
-        }
-
-        $userId = $this->auth->getUserId();
-        $currentPassword = $data['currentPassword'];
-        $newPassword = $data['newPassword'];
-
-        $userRepository = $this->getRepository(User::class);
-        $result = $userRepository->changePassword($userId, $currentPassword, $newPassword);
-        if ($result) {
-            echo json_encode([
-                'status' => 'success',
-                'message' => 'Hasło zostało zmienione pomyślnie.'
-            ]);
-        } else {
-            echo json_encode([
-                'status' => 'error',
-                'message' => 'Nie udało się zmienić hasła. Sprawdź swoje aktualne hasło.'
-            ]);
         }
     }
 }

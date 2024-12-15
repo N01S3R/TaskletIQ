@@ -16,7 +16,9 @@ class ControllerFactory
      */
     public static function create($controllerName, EntityManager $entityManager)
     {
-        $controllerClass = 'App\\Controller\\' . $controllerName;
+        $namespace = strpos($controllerName, 'Api') === 0 ? 'App\\Controller\\ApiController\\' : 'App\\Controller\\';
+        $controllerClass = $namespace . $controllerName;
+
         if (class_exists($controllerClass)) {
             return new $controllerClass($entityManager);
         }

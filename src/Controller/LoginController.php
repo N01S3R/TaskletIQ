@@ -9,7 +9,7 @@ class LoginController extends BaseController
      * 
      * @return void
      */
-    public function index(): void
+    public function displayLogin(): void
     {
         if ($this->auth->getUserId()) {
             // Sprawdzanie, czy użytkownik jest już zalogowany
@@ -28,7 +28,7 @@ class LoginController extends BaseController
      * 
      * @return void
      */
-    public function login(): void
+    public function loginUser(): void
     {
         if (!$this->auth->getUserId()) {
             $username = $_POST['username'] ?? '';
@@ -47,7 +47,7 @@ class LoginController extends BaseController
             }
         } else {
             // Użytkownik już zalogowany, przekieruj na stronę główną
-            $this->index();
+            $this->displayLogin();
         }
     }
 
@@ -56,7 +56,7 @@ class LoginController extends BaseController
      * 
      * @return void
      */
-    public function logout(): void
+    public function displayLogout(): void
     {
         $this->auth->logout();
 
